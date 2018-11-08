@@ -12,7 +12,7 @@
 	"payment_amount":      "1.00",
 	"payment_message":     "iDeal transactie ter authenticatie",
 
-	"enable_idin:":        false,
+	"enable_idin":         false,
 	"idin_path_prefix":    "/irma_ideal_server/api/v1/idin/",
 	"idin_credential_id":  "irma-demo.idin.idin",
 	"idin_acquirer_cert":  "",
