@@ -77,7 +77,7 @@ func cmdServe(addr string) {
 	if config.EnableIDIN {
 		log.Println("enabling iDIN")
 
-		iDINAcquirerCert, err := readCertificate(filepath.Join(configDir + config.IDINAcquirerCert))
+		iDINAcquirerCert, err := readCertificate(filepath.Join(configDir, config.IDINAcquirerCert))
 		if err != nil {
 			log.Fatal(err)
 		}
