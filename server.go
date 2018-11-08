@@ -62,11 +62,11 @@ func cmdServe(addr string) {
 		}
 
 		// iDeal routes
-		http.HandleFunc("/irma_ideal_server/api/v1/ideal/banks", apiIDealIssuers)
-		http.HandleFunc("/irma_ideal_server/api/v1/ideal/start", func(w http.ResponseWriter, r *http.Request) {
+		http.HandleFunc(config.IDealPathPrefix+"banks", apiIDealIssuers)
+		http.HandleFunc(config.IDealPathPrefix+"start", func(w http.ResponseWriter, r *http.Request) {
 			apiIDealStart(w, r, ideal)
 		})
-		http.HandleFunc("/irma_ideal_server/api/v1/ideal/return", func(w http.ResponseWriter, r *http.Request) {
+		http.HandleFunc(config.IDealPathPrefix+"return", func(w http.ResponseWriter, r *http.Request) {
 			apiIDealReturn(w, r, ideal)
 		})
 
@@ -97,11 +97,11 @@ func cmdServe(addr string) {
 		}
 
 		// iDIN routes
-		http.HandleFunc("/irma_ideal_server/api/v1/idin/banks", apiIDINIssuers)
-		http.HandleFunc("/irma_ideal_server/api/v1/idin/start", func(w http.ResponseWriter, r *http.Request) {
+		http.HandleFunc(config.IDINPathPrefix+"banks", apiIDINIssuers)
+		http.HandleFunc(config.IDINPathPrefix+"start", func(w http.ResponseWriter, r *http.Request) {
 			apiIDINStart(w, r, idin)
 		})
-		http.HandleFunc("/irma_ideal_server/api/v1/idin/return", func(w http.ResponseWriter, r *http.Request) {
+		http.HandleFunc(config.IDINPathPrefix+"return", func(w http.ResponseWriter, r *http.Request) {
 			apiIDINReturn(w, r, idin)
 		})
 

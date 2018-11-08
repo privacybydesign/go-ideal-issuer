@@ -14,6 +14,7 @@ type Config struct {
 	StaticDir string `json:"static_dir"`
 
 	EnableIDeal       bool   `json:"enable_ideal"`
+	IDealPathPrefix   string `json:"ideal_path_prefix"`
 	IDealAcquirerCert string `json:"ideal_acquirer_cert"`
 	IDealCredentialID string `json:"ideal_credential_id"`
 	IDealBaseURL      string `json:"ideal_base_url"`
@@ -24,6 +25,7 @@ type Config struct {
 	PaymentMessage    string `json:"payment_message"`
 
 	EnableIDIN       bool   `json:"enable_idin"`
+	IDINPathPrefix   string `json:"idin_path_prefix"`
 	IDINAcquirerCert string `json:"idin_acquirer_cert"`
 	IDINCredentialID string `json:"idin_credential_id"`
 	IDINBaseURL      string `json:"idin_base_url"`

@@ -2,6 +2,7 @@
 	"static_dir":          "",
 
 	"enable_ideal":        true,
+	"ideal_path_prefix":   "/irma_ideal_server/api/v1/ideal/",
 	"ideal_credential_id": "pbdf.pbdf.ideal",
 	"ideal_acquirer_cert": "",
 	"ideal_base_url":      "",
@@ -12,6 +13,7 @@
 	"payment_message":     "iDeal transactie ter authenticatie",
 
 	"enable_idin:":        false,
+	"idin_path_prefix":    "/irma_ideal_server/api/v1/idin/",
 	"idin_credential_id":  "irma-demo.idin.idin",
 	"idin_acquirer_cert":  "",
 	"idin_base_url":       "",
