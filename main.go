@@ -11,7 +11,9 @@ import (
 var configDir string
 
 type Config struct {
-	StaticDir string `json:"static_dir"`
+	StaticDir       string `json:"static_dir"`
+	TokenStaticSalt string `json:"token_static_salt"`
+	TokenHMACKey    string `json:"token_hmac_key"`
 
 	EnableIDeal       bool   `json:"enable_ideal"`
 	IDealPathPrefix   string `json:"ideal_path_prefix"`

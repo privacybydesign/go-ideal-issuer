@@ -1,5 +1,7 @@
 {
 	"static_dir":          "",
+	"token_static_salt":   "",
+	"token_hmac_key":      "",
 
 	"enable_ideal":        true,
 	"ideal_path_prefix":   "/irma_ideal_server/api/v1/ideal/",

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -87,12 +88,21 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 		return
 	}
 
+	rawToken := makeToken(response.ConsumerBIC, response.ConsumerIBAN)
+	token := base64.URLEncoding.EncodeToString(rawToken)
+
+	rawSignature := signToken(rawToken)
+	signature := base64.URLEncoding.EncodeToString(rawSignature)
+	signedToken := token + ":" + signature
+
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	encoder := json.NewEncoder(w)
 	err = encoder.Encode(struct {
-		JWT string `json:"jwt"`
+		JWT   string `json:"jwt"`
+		Token string `json:"token"`
 	}{
-		JWT: text,
+		JWT:   text,
+		Token: signedToken,
 	})
 	if err != nil {
 		log.Println("ideal: cannot encode JSON and send response:", err)
