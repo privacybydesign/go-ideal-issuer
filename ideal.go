@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"time"
@@ -86,5 +87,14 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 		return
 	}
 
-	w.Write([]byte(text))
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	encoder := json.NewEncoder(w)
+	err = encoder.Encode(struct {
+		JWT string `json:"jwt"`
+	}{
+		JWT: text,
+	})
+	if err != nil {
+		log.Println("ideal: cannot encode JSON and send response:", err)
+	}
 }
