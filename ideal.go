@@ -91,6 +91,16 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 	rawToken := makeToken(response.ConsumerBIC, response.ConsumerIBAN)
 	token := base64.URLEncoding.EncodeToString(rawToken)
 
+	// Save the token (hashed) to the database, to prevent timing attacks on the
+	// database on retrieval.
+	_, err = tokenDB.Exec("INSERT INTO idin_tokens (hashedToken) VALUES (?)", hashToken(rawToken))
+	if err != nil {
+		log.Fatal("failed to insert token into database:", err)
+		// unreachable
+		sendErrorResponse(w, 500, "signing")
+		return
+	}
+
 	rawSignature := signToken(rawToken)
 	signature := base64.URLEncoding.EncodeToString(rawSignature)
 	signedToken := token + ":" + signature

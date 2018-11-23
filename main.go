@@ -1,10 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // Flags parsed at program startup and never modified afterwards.
@@ -14,6 +17,7 @@ type Config struct {
 	StaticDir       string `json:"static_dir"`
 	TokenStaticSalt string `json:"token_static_salt"`
 	TokenHMACKey    string `json:"token_hmac_key"`
+	DBPath          string `json:"db_path"`
 
 	EnableIDeal       bool   `json:"enable_ideal"`
 	IDealPathPrefix   string `json:"ideal_path_prefix"`
@@ -36,7 +40,10 @@ type Config struct {
 	IDINReturnURL    string `json:"idin_return_url"`
 }
 
-var config Config
+var (
+	config  Config
+	tokenDB *sql.DB
+)
 
 func readConfig() error {
 	data, err := readFile(configDir + "/config.json")
@@ -73,9 +80,16 @@ func main() {
 		}
 		err := readConfig()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Could not read config file: "+err.Error())
+			fmt.Fprintln(os.Stderr, "Could not read config file:", err)
 			return
 		}
+		db, err := sql.Open("sqlite3", config.DBPath)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Could not open sqlite3 database:", err)
+			return
+		}
+		defer db.Close()
+		tokenDB = db
 		cmdServe(flag.Arg(1))
 	default:
 		fmt.Fprintln(flag.CommandLine.Output(), "Unknown command:", flag.Arg(0))
