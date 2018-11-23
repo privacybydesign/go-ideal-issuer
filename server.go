@@ -118,5 +118,8 @@ func cmdServe(addr string) {
 	}
 
 	log.Println("serving from", addr)
-	http.ListenAndServe(addr, nil)
+	err = http.ListenAndServe(addr, nil)
+	if err != nil {
+		log.Fatal("could not start server: ", err)
+	}
 }
