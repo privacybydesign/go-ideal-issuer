@@ -36,8 +36,8 @@ func makeToken(bic, iban string) []byte {
 // user-supplied token to tokens in the database in a way that's certainly
 // not constant-time. Hashing it first makes timing attacks impossible.
 func hashToken(token []byte) string {
-	digest := sha512.Sum512_256(token)
-	return hex.EncodeToString(digest[:])
+	digest := sha512.Sum512(token)
+	return hex.EncodeToString(digest[:32])
 }
 
 // Sign a token for the happy flow from iDeal to iDIN, without pause.
