@@ -25,7 +25,7 @@ func apiIDealIssuers(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-func apiIDealStart(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClient) {
+func apiIDealStart(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClient, trxidAddChan chan string) {
 	if err := r.ParseForm(); err != nil {
 		sendErrorResponse(w, 400, "no-params")
 		return
@@ -38,10 +38,11 @@ func apiIDealStart(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClien
 		sendErrorResponse(w, 500, "transaction")
 		return
 	}
+	trxidAddChan <- transaction.TransactionID() // auto-close transaction
 	w.Write([]byte(transaction.IssuerAuthenticationURL()))
 }
 
-func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClient) {
+func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClient, trxidRemoveChan chan string) {
 	if err := r.ParseForm(); err != nil {
 		sendErrorResponse(w, 400, "no-params")
 		return
@@ -51,6 +52,19 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 	if err != nil {
 		sendErrorResponse(w, 500, "transaction")
 		log.Println("failed to request transaction status:", err)
+		return
+	}
+
+	// Remove this transaction from the list of transactions to auto-close.
+	if response.Status != idx.Open {
+		// Transaction was closed.
+		// Remove this transaction from the list of transactions to auto-close.
+		trxidRemoveChan <- trxid
+	}
+	if response.Status != idx.Success {
+		// Expected a success response here.
+		sendErrorResponse(w, 500, "transaction")
+		log.Println("transaction %s has status %s on return", trxid, response.Status)
 		return
 	}
 
@@ -116,5 +130,44 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 	})
 	if err != nil {
 		log.Println("ideal: cannot encode JSON and send response:", err)
+	}
+}
+
+func idealAutoCloseTransactions(ideal *idx.IDealClient, trxidAddChan, trxidRemoveChan chan string) {
+	const closeAfter = 24 * time.Hour
+	const tickInterval = time.Hour
+
+	ticker := time.Tick(tickInterval)
+	transactions := make(map[string]time.Time)
+	for {
+		select {
+		case trxid := <-trxidAddChan:
+			transactions[trxid] = time.Now()
+		case trxid := <-trxidRemoveChan:
+			if _, ok := transactions[trxid]; ok {
+				delete(transactions, trxid)
+			} else {
+				log.Println("trying to close an already-closed transaction:", trxid)
+			}
+		case <-ticker:
+			now := time.Now()
+			for trxid, created := range transactions {
+				if created.Before(now.Add(-closeAfter)) {
+					delete(transactions, trxid)
+
+					// If this transaction is still not closed, re-add it here.
+					status, err := ideal.TransactionStatus(trxid)
+					if err != nil {
+						log.Printf("transaction %s status could not be requested, retrying in %s: %s", trxid, closeAfter, err)
+						transactions[trxid] = time.Now()
+					} else if status.Status == idx.Open {
+						log.Printf("transaction %s is still not closed, retrying in %s", trxid, closeAfter)
+						transactions[trxid] = time.Now()
+					} else {
+						log.Printf("transaction %s was closed with status %s", trxid, status.Status)
+					}
+				}
+			}
+		}
 	}
 }

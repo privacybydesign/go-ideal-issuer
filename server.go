@@ -61,17 +61,25 @@ func cmdServe(addr string) {
 			},
 		}
 
+		// Channels to send transactions over that must be closed in 24 hour, or
+		// removed from this list before this time.
+		trxidAddChan := make(chan string)
+		trxidRemoveChan := make(chan string)
+
 		// iDeal routes
 		http.HandleFunc(config.IDealPathPrefix+"banks", apiIDealIssuers)
 		http.HandleFunc(config.IDealPathPrefix+"start", func(w http.ResponseWriter, r *http.Request) {
-			apiIDealStart(w, r, ideal)
+			apiIDealStart(w, r, ideal, trxidAddChan)
 		})
 		http.HandleFunc(config.IDealPathPrefix+"return", func(w http.ResponseWriter, r *http.Request) {
-			apiIDealReturn(w, r, ideal)
+			apiIDealReturn(w, r, ideal, trxidRemoveChan)
 		})
 
 		// Start updating the banks list in the background.
 		go backgroundUpdateIssuers("iDeal", &iDealIssuersJSON, ideal)
+
+		// Start auto-closing transactions in the background.
+		go idealAutoCloseTransactions(ideal, trxidAddChan, trxidRemoveChan)
 	}
 
 	if config.EnableIDIN {

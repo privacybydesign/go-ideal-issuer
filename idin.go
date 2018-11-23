@@ -54,15 +54,15 @@ func apiIDINReturn(w http.ResponseWriter, r *http.Request, idin *idx.IDINClient)
 	}
 
 	attributes := map[string]string{
-		"initials":    response["urn:nl:bvn:bankid:1.0:consumer.initials"],
-		"familyname":  response["urn:nl:bvn:bankid:1.0:consumer.legallastname"],
-		"prefix":      response["urn:nl:bvn:bankid:1.0:consumer.legallastnameprefix"],
-		"dateofbirth": samlMapDateOfBirth(response["urn:nl:bvn:bankid:1.0:consumer.dateofbirth"]),
-		"gender":      samlMapGender(response["urn:nl:bvn:bankid:1.0:consumer.gender"]),
-		"address":     response["urn:nl:bvn:bankid:1.0:consumer.street"] + " " + response["urn:nl:bvn:bankid:1.0:consumer.houseno"],
-		"zipcode":     response["urn:nl:bvn:bankid:1.0:consumer.postalcode"],
-		"city":        response["urn:nl:bvn:bankid:1.0:consumer.city"],
-		"country":     response["urn:nl:bvn:bankid:1.0:consumer.country"],
+		"initials":    response.Attributes["urn:nl:bvn:bankid:1.0:consumer.initials"],
+		"familyname":  response.Attributes["urn:nl:bvn:bankid:1.0:consumer.legallastname"],
+		"prefix":      response.Attributes["urn:nl:bvn:bankid:1.0:consumer.legallastnameprefix"],
+		"dateofbirth": samlMapDateOfBirth(response.Attributes["urn:nl:bvn:bankid:1.0:consumer.dateofbirth"]),
+		"gender":      samlMapGender(response.Attributes["urn:nl:bvn:bankid:1.0:consumer.gender"]),
+		"address":     response.Attributes["urn:nl:bvn:bankid:1.0:consumer.street"] + " " + response.Attributes["urn:nl:bvn:bankid:1.0:consumer.houseno"],
+		"zipcode":     response.Attributes["urn:nl:bvn:bankid:1.0:consumer.postalcode"],
+		"city":        response.Attributes["urn:nl:bvn:bankid:1.0:consumer.city"],
+		"country":     response.Attributes["urn:nl:bvn:bankid:1.0:consumer.country"],
 	}
 
 	disjunction := irma.AttributeDisjunctionList{
