@@ -82,41 +82,6 @@ func cmdServe(addr string) {
 		go idealAutoCloseTransactions(ideal, trxidAddChan, trxidRemoveChan)
 	}
 
-	if config.EnableIDIN {
-		log.Println("enabling iDIN")
-
-		iDINAcquirerCert, err := readCertificate(filepath.Join(configDir, config.IDINAcquirerCert))
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		idin := &idx.IDINClient{
-			CommonClient: idx.CommonClient{
-				BaseURL:    config.IDINBaseURL,
-				MerchantID: config.IDINMerchantID,
-				SubID:      config.IDINSubID,
-				ReturnURL:  config.IDINReturnURL,
-				Certificate: tls.Certificate{
-					Certificate: [][]byte{cert},
-					PrivateKey:  sk,
-				},
-				AcquirerCert: iDINAcquirerCert,
-			},
-		}
-
-		// iDIN routes
-		http.HandleFunc(config.IDINPathPrefix+"banks", apiIDINIssuers)
-		http.HandleFunc(config.IDINPathPrefix+"start", func(w http.ResponseWriter, r *http.Request) {
-			apiIDINStart(w, r, idin)
-		})
-		http.HandleFunc(config.IDINPathPrefix+"return", func(w http.ResponseWriter, r *http.Request) {
-			apiIDINReturn(w, r, idin)
-		})
-
-		// Start updating the banks list in the background.
-		go backgroundUpdateIssuers("iDIN", &iDINIssuersJSON, idin)
-	}
-
 	log.Println("serving from", addr)
 	err = http.ListenAndServe(addr, nil)
 	if err != nil {

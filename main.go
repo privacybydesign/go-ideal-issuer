@@ -30,16 +30,6 @@ type Config struct {
 	IDealReturnURL    string `json:"ideal_return_url"`
 	PaymentAmount     string `json:"payment_amount"`
 	PaymentMessage    string `json:"payment_message"`
-
-	EnableIDIN       bool   `json:"enable_idin"`
-	IDINServerName   string `json:"idin_server_name"`
-	IDINPathPrefix   string `json:"idin_path_prefix"`
-	IDINAcquirerCert string `json:"idin_acquirer_cert"`
-	IDINCredentialID string `json:"idin_credential_id"`
-	IDINBaseURL      string `json:"idin_base_url"`
-	IDINMerchantID   string `json:"idin_merchant_id"`
-	IDINSubID        string `json:"idin_sub_id"`
-	IDINReturnURL    string `json:"idin_return_url"`
 }
 
 var (

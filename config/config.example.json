@@ -15,14 +15,4 @@
 	"ideal_return_url":    "",
 	"payment_amount":      "1.00",
 	"payment_message":     "iDeal transactie ter authenticatie",
-
-	"enable_idin":         false,
-	"idin_server_name":    "testip",
-	"idin_path_prefix":    "/irma_ideal_server/api/v1/idin/",
-	"idin_credential_id":  "irma-demo.idin.idin",
-	"idin_acquirer_cert":  "",
-	"idin_base_url":       "",
-	"idin_merchant_id":    "",
-	"idin_sub_id":         "0",
-	"idin_return_url":     ""
 }
