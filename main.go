@@ -20,6 +20,7 @@ type Config struct {
 	DBPath          string `json:"db_path"`
 
 	EnableIDeal       bool   `json:"enable_ideal"`
+	IDealServerName   string `json:"ideal_server_name"`
 	IDealPathPrefix   string `json:"ideal_path_prefix"`
 	IDealAcquirerCert string `json:"ideal_acquirer_cert"`
 	IDealCredentialID string `json:"ideal_credential_id"`
@@ -31,6 +32,7 @@ type Config struct {
 	PaymentMessage    string `json:"payment_message"`
 
 	EnableIDIN       bool   `json:"enable_idin"`
+	IDINServerName   string `json:"idin_server_name"`
 	IDINPathPrefix   string `json:"idin_path_prefix"`
 	IDINAcquirerCert string `json:"idin_acquirer_cert"`
 	IDINCredentialID string `json:"idin_credential_id"`

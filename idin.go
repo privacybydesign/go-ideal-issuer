@@ -92,7 +92,7 @@ func apiIDINReturn(w http.ResponseWriter, r *http.Request, idin *idx.IDINClient)
 			Content: disjunction,
 		},
 	})
-	text, err := jwt.Sign("testip", sk)
+	text, err := jwt.Sign(config.IDINServerName, sk)
 	if err != nil {
 		log.Println("cannot sign signature request:", err)
 		sendErrorResponse(w, 500, "signing")

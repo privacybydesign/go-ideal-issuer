@@ -95,7 +95,7 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 	jwt := irma.NewIdentityProviderJwt("Privacy by Design Foundation", &irma.IssuanceRequest{
 		Credentials: credentials,
 	})
-	text, err := jwt.Sign("ideal_server", sk)
+	text, err := jwt.Sign(config.IDealServerName, sk)
 	if err != nil {
 		log.Println("cannot sign signature request:", err)
 		sendErrorResponse(w, 500, "signing")

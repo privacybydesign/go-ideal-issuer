@@ -6,7 +6,8 @@
 
 	"enable_ideal":        true,
 	"ideal_path_prefix":   "/irma_ideal_server/api/v1/ideal/",
-	"ideal_credential_id": "pbdf.pbdf.ideal",
+	"ideal_server_name":   "testip",
+	"ideal_credential_id": "irma-demo.ideal.ideal",
 	"ideal_acquirer_cert": "",
 	"ideal_base_url":      "",
 	"ideal_merchant_id":   "",
@@ -16,6 +17,7 @@
 	"payment_message":     "iDeal transactie ter authenticatie",
 
 	"enable_idin":         false,
+	"idin_server_name":    "testip",
 	"idin_path_prefix":    "/irma_ideal_server/api/v1/idin/",
 	"idin_credential_id":  "irma-demo.idin.idin",
 	"idin_acquirer_cert":  "",
