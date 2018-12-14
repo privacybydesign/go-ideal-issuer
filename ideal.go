@@ -12,6 +12,8 @@ import (
 )
 
 func apiIDealIssuers(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	// Atomically get the JSON.
 	banksLock.Lock()
 	data := iDealIssuersJSON
@@ -26,6 +28,8 @@ func apiIDealIssuers(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiIDealStart(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClient, trxidAddChan chan string) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	if err := r.ParseForm(); err != nil {
 		sendErrorResponse(w, 400, "no-params")
 		return
@@ -43,6 +47,8 @@ func apiIDealStart(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClien
 }
 
 func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClient, trxidRemoveChan chan string) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	if err := r.ParseForm(); err != nil {
 		sendErrorResponse(w, 400, "no-params")
 		return
