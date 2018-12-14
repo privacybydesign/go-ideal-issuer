@@ -109,8 +109,7 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 	// database on retrieval.
 	_, err = tokenDB.Exec("INSERT INTO idin_tokens (hashedToken) VALUES (?)", hashToken(rawToken))
 	if err != nil {
-		log.Fatal("failed to insert token into database:", err)
-		// unreachable
+		log.Println("failed to insert token into database:", err)
 		sendErrorResponse(w, 500, "signing")
 		return
 	}

@@ -2,7 +2,8 @@
 	"static_dir":          "",
 	"token_static_salt":   "",
 	"token_hmac_key":      "",
-	"db_path":             "",
+	"db_driver":           "sqlite3",
+	"db_datasource":       "irma_idx.sqlite3",
 
 	"enable_ideal":        true,
 	"ideal_path_prefix":   "/irma_ideal_server/api/v1/ideal/",
@@ -14,5 +15,5 @@
 	"ideal_sub_id":        "0",
 	"ideal_return_url":    "",
 	"payment_amount":      "1.00",
-	"payment_message":     "iDeal transactie ter authenticatie",
+	"payment_message":     "iDeal transactie ter authenticatie"
 }

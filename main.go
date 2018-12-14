@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -17,7 +18,8 @@ type Config struct {
 	StaticDir       string `json:"static_dir"`
 	TokenStaticSalt string `json:"token_static_salt"`
 	TokenHMACKey    string `json:"token_hmac_key"`
-	DBPath          string `json:"db_path"`
+	DBDriverName    string `json:"db_driver"`
+	DBDataSource    string `json:"db_datasource"`
 
 	EnableIDeal       bool   `json:"enable_ideal"`
 	IDealServerName   string `json:"ideal_server_name"`
@@ -75,7 +77,7 @@ func main() {
 			fmt.Fprintln(os.Stderr, "Could not read config file:", err)
 			return
 		}
-		db, err := sql.Open("sqlite3", config.DBPath)
+		db, err := sql.Open(config.DBDriverName, config.DBDataSource)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Could not open sqlite3 database:", err)
 			return
