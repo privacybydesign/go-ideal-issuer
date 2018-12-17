@@ -34,7 +34,7 @@ func apiIDealStart(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClien
 		sendErrorResponse(w, 400, "no-params")
 		return
 	}
-	bank := r.PostFormValue("bank")
+	bank := r.FormValue("bank")
 	transaction := ideal.NewTransaction(bank, "1", config.PaymentAmount, config.PaymentMessage, "ideal")
 	err := transaction.Start()
 	if err != nil {
@@ -53,7 +53,7 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 		sendErrorResponse(w, 400, "no-params")
 		return
 	}
-	trxid := r.PostFormValue("trxid")
+	trxid := r.FormValue("trxid")
 	response, err := ideal.TransactionStatus(trxid)
 	if err != nil {
 		sendErrorResponse(w, 500, "transaction")
