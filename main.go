@@ -50,7 +50,7 @@ func readConfig() error {
 func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s <command> [args...]\n", os.Args[0])
-		fmt.Fprintln(flag.CommandLine.Output(), "Available commands: help, read, server")
+		fmt.Fprintln(flag.CommandLine.Output(), "Available commands: help, server")
 		fmt.Fprintln(flag.CommandLine.Output(), "Flags:")
 		flag.PrintDefaults()
 	}
@@ -60,26 +60,26 @@ func main() {
 	flag.Parse()
 
 	if flag.NArg() < 1 {
-		fmt.Println("Please provide a command")
+		flag.Usage()
 		return
 	}
 	switch flag.Arg(0) {
-	case "help", "usage":
+	case "help":
 		flag.Usage()
 	case "server":
 		if flag.NArg() != 2 {
-			fmt.Fprintln(flag.CommandLine.Output(), "Provide a host:port to bind to for \"server\".")
+			fmt.Fprintln(flag.CommandLine.Output(), "Provide a host:port to bind to, for example:\n    ", os.Args[0], "server :8083")
 			flag.Usage()
 			return
 		}
 		err := readConfig()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Could not read config file:", err)
+			fmt.Fprintln(flag.CommandLine.Output(), "Could not read config file:", err)
 			return
 		}
 		db, err := sql.Open(config.DBDriverName, config.DBDataSource)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Could not open sqlite3 database:", err)
+			fmt.Fprintln(flag.CommandLine.Output(), "Could not open sqlite3 database:", err)
 			return
 		}
 		defer db.Close()
