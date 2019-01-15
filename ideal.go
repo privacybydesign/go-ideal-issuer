@@ -139,15 +139,19 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 }
 
 func idealAutoCloseTransactions(ideal *idx.IDealClient, trxidAddChan, trxidRemoveChan chan string) {
-	const closeAfter = 24 * time.Hour
-	const tickInterval = time.Hour
+	const firstCheckAfter = 12 * time.Hour
+	const recheckAfter = 24 * time.Hour
+	const tickInterval = time.Second
+
+	// Transactions are stored in a {trxid => timestamp} map, where the
+	// timestamp is the time when the transaction should be re-checked.
 
 	ticker := time.Tick(tickInterval)
 	transactions := make(map[string]time.Time)
 	for {
 		select {
 		case trxid := <-trxidAddChan:
-			transactions[trxid] = time.Now()
+			transactions[trxid] = time.Now().Add(firstCheckAfter)
 		case trxid := <-trxidRemoveChan:
 			if _, ok := transactions[trxid]; ok {
 				delete(transactions, trxid)
@@ -156,18 +160,18 @@ func idealAutoCloseTransactions(ideal *idx.IDealClient, trxidAddChan, trxidRemov
 			}
 		case <-ticker:
 			now := time.Now()
-			for trxid, created := range transactions {
-				if created.Before(now.Add(-closeAfter)) {
+			for trxid, expired := range transactions {
+				if expired.Before(now) {
 					delete(transactions, trxid)
 
 					// If this transaction is still not closed, re-add it here.
 					status, err := ideal.TransactionStatus(trxid)
 					if err != nil {
-						log.Printf("transaction %s status could not be requested, retrying in %s: %s", trxid, closeAfter, err)
-						transactions[trxid] = time.Now()
+						log.Printf("transaction %s status could not be requested, retrying in %s: %s", trxid, recheckAfter, err)
+						transactions[trxid] = time.Now().Add(recheckAfter)
 					} else if status.Status == idx.Open {
-						log.Printf("transaction %s is still not closed, retrying in %s", trxid, closeAfter)
-						transactions[trxid] = time.Now()
+						log.Printf("transaction %s is still not closed, retrying in %s", trxid, recheckAfter)
+						transactions[trxid] = time.Now().Add(recheckAfter)
 					} else {
 						log.Printf("transaction %s was closed with status %s", trxid, status.Status)
 					}
