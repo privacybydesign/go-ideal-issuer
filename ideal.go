@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
+	"github.com/dgrijalva/jwt-go"
 	"log"
 	"net/http"
 	"time"
@@ -85,7 +86,7 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 	credentials := []*irma.CredentialRequest{
 		&irma.CredentialRequest{
 			Validity:         &validity,
-			CredentialTypeID: &credid,
+			CredentialTypeID: credid,
 			Attributes:       attributes,
 		},
 	}
@@ -98,10 +99,10 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 		return
 	}
 
-	jwt := irma.NewIdentityProviderJwt("Privacy by Design Foundation", &irma.IssuanceRequest{
+	issuanceJwt := irma.NewIdentityProviderJwt("Privacy by Design Foundation", &irma.IssuanceRequest{
 		Credentials: credentials,
 	})
-	text, err := jwt.Sign(config.IDealServerName, sk)
+	text, err := issuanceJwt.Sign(jwt.SigningMethodRS256, sk)
 	if err != nil {
 		log.Println("cannot sign signature request:", err)
 		sendErrorResponse(w, 500, "signing")

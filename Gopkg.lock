@@ -66,14 +66,6 @@
   version = "v1.1.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:4bbe6c0a8c33a0993415aaa7197236992a3072b524173f34641ab85443550501"
-  name = "github.com/credentials/safeprime"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "215fbc7208bf7e4a56d7bcd88735eb0c86ec5894"
-
-[[projects]]
   digest = "1:76dc72490af7174349349838f2fe118996381b31ea83243812a97e5a0fd5ed55"
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
@@ -138,6 +130,14 @@
   version = "v0.5.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:d7147bbe910e366f6ed9181f1f99319adafee7c1bb1d68568e477445525eb381"
+  name = "github.com/jasonlvhit/gocron"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "bb373ebbd3f9b599ca9d609310624c484f238ffe"
+
+[[projects]]
   digest = "1:75ab90ae3f5d876167e60f493beadfe66f0ed861a710f283fb06c86437a09538"
   name = "github.com/jonboulle/clockwork"
   packages = ["."]
@@ -146,20 +146,20 @@
   version = "v0.1.0"
 
 [[projects]]
+  digest = "1:31e761d97c76151dde79e9d28964a812c46efc5baee4085b86f68f0c654450de"
+  name = "github.com/konsorten/go-windows-terminal-sequences"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "f55edac94c9bbba5d6182a4be46d86a2c9b5b50e"
+  version = "v1.0.2"
+
+[[projects]]
   digest = "1:4a49346ca45376a2bba679ca0e83bec949d780d4e927931317904bad482943ec"
   name = "github.com/mattn/go-sqlite3"
   packages = ["."]
   pruneopts = "UT"
   revision = "c7c4067b79cc51e6dfdcef5c702e74b1e0fa7c75"
   version = "v1.10.0"
-
-[[projects]]
-  branch = "master"
-  digest = "1:ef35e43a113abe235855614390b86d6d6d5160e54322f081b56dba87223639da"
-  name = "github.com/mhe/gabi"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "78bc0716eb6d1d825c7bb16615986e24c902cee3"
 
 [[projects]]
   branch = "master"
@@ -178,8 +178,20 @@
   version = "v0.8.0"
 
 [[projects]]
-  branch = "aykevl-jwt2"
-  digest = "1:8e35bf745754d8e9e66c8d7d3fa31673f990cf3a7ff36b28310891a3c458a99e"
+  branch = "master"
+  digest = "1:efc4c33449984cda3f7880142fbf35fdc16c7e9c4c27c50a8e77bd055400cceb"
+  name = "github.com/privacybydesign/gabi"
+  packages = [
+    ".",
+    "big",
+    "safeprime",
+  ]
+  pruneopts = "UT"
+  revision = "ce779395f4c98898f21f8c49f71f4b3353995127"
+
+[[projects]]
+  branch = "master"
+  digest = "1:0b2bcc15c188532ec5f25d8b878d289a6704d56d523c082aa7317e003c9bb086"
   name = "github.com/privacybydesign/irmago"
   packages = [
     ".",
@@ -187,15 +199,7 @@
     "internal/fs",
   ]
   pruneopts = "UT"
-  revision = "e95d673380277eb5e2177610d5e1a0964435ee60"
-
-[[projects]]
-  branch = "master"
-  digest = "1:abab2c85a12689a4218964335aa990ff33b4f3c7ba48e3283861c4714d2e93b1"
-  name = "github.com/rainycape/dl"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "1b01514224a1a60a6bcbb0b6b9d3a00ec14ae17f"
+  revision = "7ef0df0fa26e42de603124315b84023ff4e30eaa"
 
 [[projects]]
   branch = "idx-hacks"
@@ -209,6 +213,14 @@
   pruneopts = "UT"
   revision = "3454d5626f5aa816e5dd6238be5a14d664b003b5"
   source = "github.com/aykevl/goxmldsig"
+
+[[projects]]
+  digest = "1:04457f9f6f3ffc5fea48e71d62f2ca256637dee0a04d710288e27e05c8b41976"
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "839c75faf7f98a33d445d181f3018b5c3409a45e"
+  version = "v1.4.2"
 
 [[projects]]
   branch = "master"
