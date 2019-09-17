@@ -1,9 +1,8 @@
 package main
 
 import (
-	"encoding/base64"
 	"encoding/json"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/privacybydesign/irmago/server/irmaserver"
 	"log"
 	"net/http"
 	"time"
@@ -83,56 +82,31 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 
 	validity := irma.Timestamp(irma.FloorToEpochBoundary(time.Now().AddDate(1, 0, 0)))
 	credid := irma.NewCredentialTypeIdentifier(config.IDealCredentialID)
+
 	credentials := []*irma.CredentialRequest{
-		&irma.CredentialRequest{
+		{
 			Validity:         &validity,
 			CredentialTypeID: credid,
 			Attributes:       attributes,
 		},
 	}
-
-	// TODO: cache, or load on startup
-	sk, err := readPrivateKey(configDir + "/sk.der")
-	if err != nil {
-		log.Println("cannot open private key:", err)
-		sendErrorResponse(w, 500, "signing")
-		return
-	}
-
-	issuanceJwt := irma.NewIdentityProviderJwt("Privacy by Design Foundation", &irma.IssuanceRequest{
+	request := &irma.IssuanceRequest{
 		Credentials: credentials,
-	})
-	text, err := issuanceJwt.Sign(jwt.SigningMethodRS256, sk)
+	}
+	sessionPointer, token, err := irmaserver.StartSession(request, nil)
 	if err != nil {
-		log.Println("cannot sign signature request:", err)
-		sendErrorResponse(w, 500, "signing")
+		log.Println("Cannot start IRMA session:", err)
 		return
 	}
-
-	rawToken := makeToken(response.ConsumerBIC, response.ConsumerIBAN)
-	token := base64.URLEncoding.EncodeToString(rawToken)
-
-	// Save the token (hashed) to the database, to prevent timing attacks on the
-	// database on retrieval.
-	_, err = tokenDB.Exec("INSERT INTO idin_tokens (hashedToken) VALUES (?)", hashToken(rawToken))
-	if err != nil {
-		log.Println("failed to insert token into database:", err)
-		sendErrorResponse(w, 500, "signing")
-		return
-	}
-
-	rawSignature := signToken(rawToken)
-	signature := base64.URLEncoding.EncodeToString(rawSignature)
-	signedToken := token + ":" + signature
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	encoder := json.NewEncoder(w)
 	err = encoder.Encode(struct {
-		JWT   string `json:"jwt"`
-		Token string `json:"token"`
+		SessionPointer *irma.Qr `json:"sessionPointer"`
+		Token          string   `json:"token"`
 	}{
-		JWT:   text,
-		Token: signedToken,
+		SessionPointer: sessionPointer,
+		Token:          token,
 	})
 	if err != nil {
 		log.Println("ideal: cannot encode JSON and send response:", err)

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -32,6 +33,7 @@ func updateIssuers(client idx.Client, destination *[]byte) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println(string(data))
 
 	// Atomically update the JSON data to be served.
 	banksLock.Lock()

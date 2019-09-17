@@ -2,6 +2,8 @@ package main
 
 import (
 	"crypto/tls"
+	"github.com/privacybydesign/irmago/server"
+	"github.com/privacybydesign/irmago/server/irmaserver"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -19,6 +21,21 @@ var (
 func sendErrorResponse(w http.ResponseWriter, httpCode int, errorCode string) {
 	w.WriteHeader(httpCode)
 	w.Write([]byte("error:" + errorCode))
+}
+
+func startIrmaServer() {
+	configuration := &server.Configuration{
+		// Replace with address that IRMA apps can reach
+		URL:                   "http://localhost:4242/irma",
+		IssuerPrivateKeysPath: "config",
+		Verbose:               2,
+	}
+
+	err := irmaserver.Initialize(configuration)
+	if err != nil {
+		log.Println("IRMA server could not be started:", err)
+	}
+	http.Handle("/irma/", irmaserver.HandlerFunc())
 }
 
 func cmdServe(addr string) {
@@ -65,6 +82,9 @@ func cmdServe(addr string) {
 		// removed from this list before this time.
 		trxidAddChan := make(chan string)
 		trxidRemoveChan := make(chan string)
+
+		// Start IRMA server
+		startIrmaServer()
 
 		// iDeal routes
 		http.HandleFunc(config.IDealPathPrefix+"banks", apiIDealIssuers)
