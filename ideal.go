@@ -90,9 +90,8 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 			Attributes:       attributes,
 		},
 	}
-	request := &irma.IssuanceRequest{
-		Credentials: credentials,
-	}
+	request := irma.NewIssuanceRequest(credentials)
+
 	sessionPointer, token, err := irmaserver.StartSession(request, nil)
 	if err != nil {
 		log.Println("Cannot start IRMA session:", err)
