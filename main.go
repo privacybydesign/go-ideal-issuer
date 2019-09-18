@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -15,14 +14,12 @@ import (
 var configDir string
 
 type Config struct {
-	StaticDir       string `json:"static_dir"`
-	TokenStaticSalt string `json:"token_static_salt"`
-	TokenHMACKey    string `json:"token_hmac_key"`
-	DBDriverName    string `json:"db_driver"`
-	DBDataSource    string `json:"db_datasource"`
+	StaticDir      string `json:"static_dir"`
+	EnableTLS      bool   `json:"enable_tls"`
+	TLSCertificate string `json:"tls_certificate"`
+	TLSPrivateKey  string `json:"tls_private_key"`
 
 	EnableIDeal       bool   `json:"enable_ideal"`
-	IDealServerName   string `json:"ideal_server_name"`
 	IDealPathPrefix   string `json:"ideal_path_prefix"`
 	IDealAcquirerCert string `json:"ideal_acquirer_cert"`
 	IDealCredentialID string `json:"ideal_credential_id"`
@@ -30,13 +27,13 @@ type Config struct {
 	IDealMerchantID   string `json:"ideal_merchant_id"`
 	IDealSubID        string `json:"ideal_sub_id"`
 	IDealReturnURL    string `json:"ideal_return_url"`
+	IrmaIdealIssuerSk string `json:"irma_ideal_issuer_sk"`
 	PaymentAmount     string `json:"payment_amount"`
 	PaymentMessage    string `json:"payment_message"`
 }
 
 var (
-	config  Config
-	tokenDB *sql.DB
+	config Config
 )
 
 func readConfig() error {
@@ -77,13 +74,6 @@ func main() {
 			fmt.Fprintln(flag.CommandLine.Output(), "Could not read config file:", err)
 			return
 		}
-		db, err := sql.Open(config.DBDriverName, config.DBDataSource)
-		if err != nil {
-			fmt.Fprintln(flag.CommandLine.Output(), "Could not open sqlite3 database:", err)
-			return
-		}
-		defer db.Close()
-		tokenDB = db
 		cmdServe(flag.Arg(1))
 	default:
 		fmt.Fprintln(flag.CommandLine.Output(), "Unknown command:", flag.Arg(0))

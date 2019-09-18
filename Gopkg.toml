@@ -30,22 +30,12 @@
   name = "github.com/aykevl/go-idx"
 
 [[constraint]]
-  name = "github.com/mattn/go-sqlite3"
-  version = "1.10.0"
-
-[[constraint]]
   branch = "master"
   name = "github.com/privacybydesign/irmago"
 
 [[constraint]]
   branch = "master"
   name = "golang.org/x/crypto"
-
-# Version v1.1 that dep currently fetches without this stanza breaks compilation
-# TODO remove this once a version is released of bolthold that includes e4f6b42
-[[override]]
-  branch = "master"
-  name = "github.com/timshannon/bolthold"
 
 [[override]]
   branch = "idx-hacks"

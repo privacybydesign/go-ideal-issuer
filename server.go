@@ -2,6 +2,8 @@ package main
 
 import (
 	"crypto/tls"
+	"github.com/privacybydesign/gabi"
+	irma "github.com/privacybydesign/irmago"
 	"github.com/privacybydesign/irmago/server"
 	"github.com/privacybydesign/irmago/server/irmaserver"
 	"log"
@@ -14,7 +16,6 @@ import (
 
 var (
 	iDealIssuersJSON []byte
-	iDINIssuersJSON  []byte
 	banksLock        sync.Mutex
 )
 
@@ -23,17 +24,27 @@ func sendErrorResponse(w http.ResponseWriter, httpCode int, errorCode string) {
 	w.Write([]byte("error:" + errorCode))
 }
 
-func startIrmaServer() {
+func startIrmaServer(addr string) {
+	issuerKey, err := gabi.NewPrivateKeyFromFile(filepath.Join(configDir, config.IrmaIdealIssuerSk))
+	if err != nil {
+		log.Fatal("IRMA IDeal issuer sk could not be found:", err)
+		return
+	}
+	protocol := "http://"
+	if config.EnableTLS {
+		protocol = "https://"
+	}
 	configuration := &server.Configuration{
-		// Replace with address that IRMA apps can reach
-		URL:                   "http://localhost:4242/irma",
-		IssuerPrivateKeysPath: "config",
-		Verbose:               2,
+		URL: protocol + addr + "/irma",
+		IssuerPrivateKeys: map[irma.IssuerIdentifier]*gabi.PrivateKey{
+			irma.NewCredentialTypeIdentifier(config.IDealCredentialID).IssuerIdentifier(): issuerKey,
+		},
 	}
 
-	err := irmaserver.Initialize(configuration)
+	err = irmaserver.Initialize(configuration)
 	if err != nil {
-		log.Println("IRMA server could not be started:", err)
+		log.Fatal("IRMA server could not be started:", err)
+		return
 	}
 	http.Handle("/irma/", irmaserver.HandlerFunc())
 }
@@ -84,7 +95,7 @@ func cmdServe(addr string) {
 		trxidRemoveChan := make(chan string)
 
 		// Start IRMA server
-		startIrmaServer()
+		startIrmaServer(addr)
 
 		// iDeal routes
 		http.HandleFunc(config.IDealPathPrefix+"banks", apiIDealIssuers)
@@ -103,7 +114,14 @@ func cmdServe(addr string) {
 	}
 
 	log.Println("serving from", addr)
-	err = http.ListenAndServe(addr, nil)
+
+	if config.EnableTLS {
+		certFilePath := filepath.Join(configDir, config.TLSCertificate)
+		keyFilePath := filepath.Join(configDir, config.TLSPrivateKey)
+		err = http.ListenAndServeTLS(addr, certFilePath, keyFilePath, nil)
+	} else {
+		err = http.ListenAndServe(addr, nil)
+	}
 	if err != nil {
 		log.Fatal("could not start server: ", err)
 	}

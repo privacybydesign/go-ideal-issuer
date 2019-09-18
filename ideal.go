@@ -80,6 +80,7 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 		"bic":      response.ConsumerBIC,
 	}
 
+	// Start IRMA session to issue iDeal credential
 	validity := irma.Timestamp(irma.FloorToEpochBoundary(time.Now().AddDate(1, 0, 0)))
 	credid := irma.NewCredentialTypeIdentifier(config.IDealCredentialID)
 
@@ -94,7 +95,7 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 
 	sessionPointer, token, err := irmaserver.StartSession(request, nil)
 	if err != nil {
-		log.Println("Cannot start IRMA session:", err)
+		log.Println("cannot start IRMA session:", err)
 		return
 	}
 
