@@ -13,6 +13,6 @@
 	"ideal_sub_id":         "0",
 	"ideal_return_url":     "",
 	"irma_ideal_issuer_sk": "irma-demo.ideal.xml",
-	"payment_amount":       "1.00",
+	"payment_amount":       "0.50",
 	"payment_message":      "iDeal transactie ter authenticatie"
 }
