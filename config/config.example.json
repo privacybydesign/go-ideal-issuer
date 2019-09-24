@@ -1,7 +1,7 @@
 {
 	"static_dir":           "",
 	"enable_tls":           false,
-	"tls_certificate": 		"",
+	"tls_certificate":      "",
 	"tls_private_key":      "",
 
 	"enable_ideal":         true,
