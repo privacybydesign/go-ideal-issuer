@@ -8,6 +8,8 @@
 	"ideal_path_prefix":    "/irma_ideal_server/api/v1/ideal/",
 	"ideal_credential_id":  "irma-demo.ideal.ideal",
 	"ideal_acquirer_cert":  "",
+	"ideal_merchant_cert":  "",
+	"ideal_merchant_sk":    "",
 	"ideal_base_url":       "",
 	"ideal_merchant_id":    "",
 	"ideal_sub_id":         "0",

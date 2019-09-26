@@ -22,6 +22,8 @@ type Config struct {
 	EnableIDeal       bool   `json:"enable_ideal"`
 	IDealPathPrefix   string `json:"ideal_path_prefix"`
 	IDealAcquirerCert string `json:"ideal_acquirer_cert"`
+	IDealMerchantCert string `json:"ideal_merchant_cert"`
+	IDealMerchantSk   string `json:"ideal_merchant_sk"`
 	IDealCredentialID string `json:"ideal_credential_id"`
 	IDealBaseURL      string `json:"ideal_base_url"`
 	IDealMerchantID   string `json:"ideal_merchant_id"`

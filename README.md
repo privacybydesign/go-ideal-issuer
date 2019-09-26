@@ -1,7 +1,7 @@
 # iDeal issuer
 
 This application provides an API backend to do payments using iDeal for the
-[iDIN IRMA issuer](https://github.com/privacybydesign/irma_idin_issuer).
+[IRMA iDeal issuer](https://github.com/privacybydesign/irma_ideal_server).
 
 
 Use it like this:
@@ -33,8 +33,24 @@ directory using the `-config` flag. It needs to have the following entries:
         return to.
       * `ideal_acquirer_cert` is the path to the certificate of the bank you're
         trying to connect to, relative to the configuration directory. Your bank
-        should provide this certificate.
-  * `ideal-sk.der` and `ideal-cert.der` are a private key and certificate pair
-    as used in the iDeal transactions. The certificate will need to be uploaded
-    to your bank, the secret key is used to sign outgoing messages to your bank.
-    Make sure the `ideal-sk.der` is in DER-encoded pkcs8 format.
+        should provide this certificate. At the bank this certificate is sometimes
+        branded as merchant certificate, because merchants have to use it. It is
+        however the certificate of the bank. 
+        
+        The certificate must be a DER-encoded X509 certificate. To test whether 
+        the key has the right format, the following command can be used:
+        `openssl x509 -in <filename> -inform der`.
+      * `ideal_merchant_cert` is the certificate (public key) of the key pair
+        that is used to send messages to the bank as a merchant. This certificate
+        also has to be uploaded at the bank. 
+        
+        The certificate must be a DER-encoded X509 certificate. To test whether 
+        the key has the right format, the following command can be used:
+        `openssl x509 -in <filename> -inform der`.
+      * `ideal_merchant_sk` is the private key corresponding to `ideal_merchant_cert`.
+        The key must be in non-encrypted, DER-encoded PKCS8 format. 
+        
+        To test whether the key has the right format, the following command can be used:
+        `openssl pkcs8 -in <filename> -inform der -nocrypt`
+        
+     All paths must be relative to the configuration directory.

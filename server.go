@@ -58,11 +58,11 @@ func cmdServe(addr string) {
 		log.Println("not serving static files, set -static flag or configure static_dir to enable")
 	}
 
-	cert, err := readFile(configDir + "/ideal-cert.der")
+	cert, err := readFile(filepath.Join(configDir, config.IDealMerchantCert))
 	if err != nil {
 		log.Fatal(err)
 	}
-	sk, err := readPrivateKey(configDir + "/ideal-sk.der")
+	sk, err := readPrivateKey(filepath.Join(configDir, config.IDealMerchantSk))
 	if err != nil {
 		log.Fatal(err)
 	}
