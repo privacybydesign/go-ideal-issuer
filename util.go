@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/pem"
 	"errors"
 	"io/ioutil"
 	"os"
@@ -24,11 +25,13 @@ func readPrivateKey(path string) (*rsa.PrivateKey, error) {
 	if err != nil {
 		return nil, err
 	}
-	key, err := x509.ParsePKCS8PrivateKey(data)
-	if err != nil {
-		return nil, err
+	keyBlock, _ := pem.Decode(data)
+	if key, err := x509.ParsePKCS1PrivateKey(keyBlock.Bytes); err == nil {
+		return key, nil
+	} else if key, err := x509.ParsePKCS8PrivateKey(keyBlock.Bytes); err == nil {
+		return key.(*rsa.PrivateKey), nil
 	}
-	return key.(*rsa.PrivateKey), nil
+	return nil, err
 }
 
 // Utility function to read a DER-encoded public key from a given path.
@@ -53,6 +56,6 @@ func readCertificate(path string) (*x509.Certificate, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	return x509.ParseCertificate(data)
+	keyBlock, _ := pem.Decode(data)
+	return x509.ParseCertificate(keyBlock.Bytes)
 }

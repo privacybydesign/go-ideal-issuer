@@ -37,20 +37,23 @@ directory using the `-config` flag. It needs to have the following entries:
         branded as merchant certificate, because merchants have to use it. It is
         however the certificate of the bank. 
         
-        The certificate must be a DER-encoded X509 certificate. To test whether 
+        The certificate must be a PEM-encoded X509 certificate. To test whether 
         the key has the right format, the following command can be used:
-        `openssl x509 -in <filename> -inform der`.
+        `openssl x509 -in <filename> -inform pem`.
       * `ideal_merchant_cert` is the certificate (public key) of the key pair
         that is used to send messages to the bank as a merchant. This certificate
         also has to be uploaded at the bank. 
         
-        The certificate must be a DER-encoded X509 certificate. To test whether 
+        The certificate must be a PEM-encoded X509 certificate. To test whether 
         the key has the right format, the following command can be used:
-        `openssl x509 -in <filename> -inform der`.
+        `openssl x509 -in <filename> -inform pem`.
       * `ideal_merchant_sk` is the private key corresponding to `ideal_merchant_cert`.
-        The key must be in non-encrypted, DER-encoded PKCS8 format. 
+        The key must be in non-encrypted, PEM-encoded PKCS1 format or in 
+        non-encrypted, PEM-encoded PKCS8 format. 
         
-        To test whether the key has the right format, the following command can be used:
-        `openssl pkcs8 -in <filename> -inform der -nocrypt`
+        To test whether the key has the right format, one of the following commands
+        must accept the key:
+        * `openssl rsa -in <filename> -inform pem`
+        * `openssl pkcs8 -in <filename> -inform pem -nocrypt`
         
      All paths must be relative to the configuration directory.

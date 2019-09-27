@@ -154,12 +154,36 @@
   version = "v1.0.2"
 
 [[projects]]
+  digest = "1:7c084e0e780596dd2a7e20d25803909a9a43689c153de953520dfbc0b0e51166"
+  name = "github.com/mattn/go-colorable"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "8029fb3788e5a4a9c00e415f586a6d033f5d38b3"
+  version = "v0.1.2"
+
+[[projects]]
+  digest = "1:36325ebb862e0382f2f14feef409ba9351271b89ada286ae56836c603d43b59c"
+  name = "github.com/mattn/go-isatty"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "e1f7b56ace729e4a73a29a6b4fac6cd5fcda7ab3"
+  version = "v0.0.9"
+
+[[projects]]
   digest = "1:4a49346ca45376a2bba679ca0e83bec949d780d4e927931317904bad482943ec"
   name = "github.com/mattn/go-sqlite3"
   packages = ["."]
   pruneopts = "UT"
   revision = "c7c4067b79cc51e6dfdcef5c702e74b1e0fa7c75"
   version = "v1.10.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:2b32af4d2a529083275afc192d1067d8126b578c7a9613b26600e4df9c735155"
+  name = "github.com/mgutz/ansi"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "9520e82c474b0a04dd04f8a40959027271bab992"
 
 [[projects]]
   branch = "master"
@@ -191,12 +215,15 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:0b2bcc15c188532ec5f25d8b878d289a6704d56d523c082aa7317e003c9bb086"
+  digest = "1:967cc211e34d6ed27a6631485f704547cb9b8f24886d170936b3560a4c25f364"
   name = "github.com/privacybydesign/irmago"
   packages = [
     ".",
     "internal/disable_sigpipe",
     "internal/fs",
+    "internal/servercore",
+    "server",
+    "server/irmaserver",
   ]
   pruneopts = "UT"
   revision = "7ef0df0fa26e42de603124315b84023ff4e30eaa"
@@ -247,6 +274,14 @@
   revision = "83840edea94426b99912e57bd1db494645cdb341"
 
 [[projects]]
+  digest = "1:39a425f98fb19427061a693fe6bf0683c9bddec4b25b17067e34fdb465e39cb9"
+  name = "github.com/x-cray/logrus-prefixed-formatter"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "bb2702d423886830dee131692131d35648c382e2"
+  version = "v0.5.2"
+
+[[projects]]
   digest = "1:c28625428387b63dd7154eb857f51e700465cfbf7c06f619e71f2da33cefe47e"
   name = "go.etcd.io/bbolt"
   packages = ["."]
@@ -256,22 +291,25 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:e4586b31c81fa439fc720bddd652483d5de86524ae3742b2ffcbfe7babc52e7b"
+  digest = "1:4046a3f0ce09e1968a459e043f09b917e88b737be4534914e2cb26cf661fc632"
   name = "golang.org/x/crypto"
   packages = [
     "ed25519",
     "ed25519/internal/edwards25519",
-    "pbkdf2",
     "sha3",
+    "ssh/terminal",
   ]
   pruneopts = "UT"
   revision = "eb0de9b17e854e9b1ccd9963efafc79862359959"
 
 [[projects]]
   branch = "master"
-  digest = "1:8775d8a768d9e65e8b659172804aac5db1fc8d563ba766470a6c2698c57c61a7"
+  digest = "1:0c7cb58af944f9690af91474a75371eecfe54c1ce3771a8dc08924430ee785d3"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = [
+    "unix",
+    "windows",
+  ]
   pruneopts = "UT"
   revision = "4ed8d59d0b35e1e29334a206d1b3f38b1e5dfb31"
 
@@ -283,16 +321,25 @@
   revision = "4a4468ece617fc8205e99368fa2200e9d1fad421"
   version = "v1.3.0"
 
+[[projects]]
+  branch = "v1"
+  digest = "1:08eeb29b91cc584a7227b52e8865638091ee6f399689d8e16e63eb9f91d9cda8"
+  name = "gopkg.in/antage/eventsource.v1"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "803f4c5af2259daa9225c72732b23e1e65ee794e"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
     "github.com/aykevl/go-idx",
-    "github.com/dgrijalva/jwt-go",
     "github.com/go-sql-driver/mysql",
     "github.com/mattn/go-sqlite3",
+    "github.com/privacybydesign/gabi",
     "github.com/privacybydesign/irmago",
-    "golang.org/x/crypto/pbkdf2",
+    "github.com/privacybydesign/irmago/server",
+    "github.com/privacybydesign/irmago/server/irmaserver",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

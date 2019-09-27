@@ -58,7 +58,7 @@ func cmdServe(addr string) {
 		log.Println("not serving static files, set -static flag or configure static_dir to enable")
 	}
 
-	cert, err := readFile(filepath.Join(configDir, config.IDealMerchantCert))
+	cert, err := readCertificate(filepath.Join(configDir, config.IDealMerchantCert))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -82,7 +82,7 @@ func cmdServe(addr string) {
 				SubID:      config.IDealSubID,
 				ReturnURL:  config.IDealReturnURL,
 				Certificate: tls.Certificate{
-					Certificate: [][]byte{cert},
+					Certificate: [][]byte{cert.Raw},
 					PrivateKey:  sk,
 				},
 				AcquirerCert: iDealAcquirerCert,
