@@ -1,15 +1,40 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"github.com/privacybydesign/irmago/server/irmaserver"
 	"log"
 	"net/http"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/aykevl/go-idx"
 	"github.com/privacybydesign/irmago"
 )
+
+// Global variable to take account of the state with open and pending transactions
+var transactionState sync.Map
+
+// Constants that determine how often transactions are checked
+const (
+	firstCheckAfter = 12 * time.Hour
+	recheckAfter = 24 * time.Hour
+	saveSucceededTransaction = time.Hour
+	maxTransactionAge = 7 * 24 * time.Hour
+	tickInterval = time.Second
+)
+
+// Struct with information that should be stored in the state
+type IDealTransactionData struct {
+	transactionID string
+	entranceCode string
+	started time.Time
+	recheckAfter time.Time
+	status *idx.IDealTransactionStatus
+}
 
 func apiIDealIssuers(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -27,7 +52,18 @@ func apiIDealIssuers(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
-func apiIDealStart(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClient, trxidAddChan chan string) {
+func generateRandomAlphNumString(strLengthAim int) (string, error) {
+	b := make([]byte, (strLengthAim*6)/8)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	str := base64.StdEncoding.EncodeToString(b)
+
+	r := strings.NewReplacer("+", "", "/", "", "=", "")
+	return r.Replace(str), nil
+}
+
+func apiIDealStart(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClient) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	if err := r.ParseForm(); err != nil {
@@ -35,18 +71,26 @@ func apiIDealStart(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClien
 		return
 	}
 	bank := r.FormValue("bank")
-	transaction := ideal.NewTransaction(bank, "1", config.PaymentAmount, config.PaymentMessage, "ideal")
-	err := transaction.Start()
+	ec, err := generateRandomAlphNumString(40)
+	pid, err := generateRandomAlphNumString(10)
+	if err != nil {
+		log.Println("failed to generate fresh ec:", err)
+		sendErrorResponse(w, 500, "no-ec")
+		return
+	}
+	transaction := ideal.NewTransaction(bank, pid, config.PaymentAmount, config.PaymentMessage, ec)
+	err = transaction.Start()
 	if err != nil {
 		log.Println("failed to create transaction:", err)
 		sendErrorResponse(w, 500, "transaction")
 		return
 	}
-	trxidAddChan <- transaction.TransactionID() // auto-close transaction
+	addTransactionToState(transaction.TransactionID(), ec)
+	log.Printf("transaction %s started", transaction.TransactionID())
 	w.Write([]byte(transaction.IssuerAuthenticationURL()))
 }
 
-func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClient, trxidRemoveChan chan string) {
+func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClient) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	if err := r.ParseForm(); err != nil {
@@ -54,30 +98,60 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 		return
 	}
 	trxid := r.FormValue("trxid")
-	response, err := ideal.TransactionStatus(trxid)
-	if err != nil {
-		sendErrorResponse(w, 500, "transaction")
-		log.Println("failed to request transaction status:", err)
+	ec := r.FormValue("ec")
+
+	// Look up transaction in state
+	v, ok := transactionState.Load(trxid)
+	if !ok {
+		sendErrorResponse(w, 404, "trxid-not-found")
+		log.Println("trying to request api return result of an already-closed transaction:", trxid)
+		return
+	}
+	transaction := v.(*IDealTransactionData)
+
+	// Check ec
+	if transaction.entranceCode != ec {
+		sendErrorResponse(w, 403, "ec-mismatch")
+		log.Printf("trying to retrieve result of transaction %s with ec %s, while actual ec is %s", trxid, ec, transaction.entranceCode)
 		return
 	}
 
-	// Remove this transaction from the list of transactions to auto-close.
-	if response.Status != idx.Open {
-		// Transaction was closed.
-		// Remove this transaction from the list of transactions to auto-close.
-		trxidRemoveChan <- trxid
-	}
-	if response.Status != idx.Success {
-		// Expected a success response here.
-		sendErrorResponse(w, 500, "transaction")
-		log.Println("transaction %s has status %s on return", trxid, response.Status)
-		return
+	if transaction.status == nil || transaction.status.Status != idx.Success {
+		response, err := ideal.TransactionStatus(trxid)
+		if err != nil {
+			sendErrorResponse(w, 500, "transaction")
+			log.Println("failed to request transaction status:", err)
+			return
+		}
+		transaction.status = response
+
+		log.Printf("transaction %s has status %s on return", trxid, response.Status)
+		switch response.Status {
+		case idx.Success:
+			break
+		case idx.Open:
+			transaction.recheckAfter = time.Now().Add(recheckAfter)
+			sendErrorResponse(w, 500, "transaction-open")
+			return
+		case idx.Cancelled:
+			sendErrorResponse(w, 500, "transaction-cancelled")
+			return
+		case idx.Expired:
+			sendErrorResponse(w, 500, "transaction-expired")
+			return
+		default:
+			transaction.recheckAfter = time.Now().Add(recheckAfter)
+			sendErrorResponse(w, 500, "transaction")
+			return
+		}
+		// Save transaction for some time in case IRMA session fails and user wants to start it again without having to pay again
+		transaction.recheckAfter = time.Now().Add(saveSucceededTransaction)
 	}
 
 	attributes := map[string]string{
-		"fullname": response.ConsumerName,
-		"iban":     response.ConsumerIBAN,
-		"bic":      response.ConsumerBIC,
+		"fullname": transaction.status.ConsumerName,
+		"iban":     transaction.status.ConsumerIBAN,
+		"bic":      transaction.status.ConsumerBIC,
 	}
 
 	// Start IRMA session to issue iDeal credential
@@ -113,45 +187,55 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 	}
 }
 
-func idealAutoCloseTransactions(ideal *idx.IDealClient, trxidAddChan, trxidRemoveChan chan string) {
-	const firstCheckAfter = 12 * time.Hour
-	const recheckAfter = 24 * time.Hour
-	const tickInterval = time.Second
+func addTransactionToState(trxid string, ec string) {
+	tdata := IDealTransactionData{
+		transactionID: trxid,
+		entranceCode: ec,
+		started: time.Now(),
+		recheckAfter: time.Now().Add(firstCheckAfter),
+	}
+	transactionState.Store(trxid, &tdata)
+}
 
-	// Transactions are stored in a {trxid => timestamp} map, where the
-	// timestamp is the time when the transaction should be re-checked.
-
+func idealAutoCloseTransactions(ideal *idx.IDealClient) {
 	ticker := time.Tick(tickInterval)
-	transactions := make(map[string]time.Time)
-	for {
-		select {
-		case trxid := <-trxidAddChan:
-			transactions[trxid] = time.Now().Add(firstCheckAfter)
-		case trxid := <-trxidRemoveChan:
-			if _, ok := transactions[trxid]; ok {
-				delete(transactions, trxid)
-			} else {
-				log.Println("trying to close an already-closed transaction:", trxid)
-			}
-		case <-ticker:
-			now := time.Now()
-			for trxid, expired := range transactions {
-				if expired.Before(now) {
-					delete(transactions, trxid)
+	for range ticker {
+		now := time.Now()
+		transactionState.Range(func (key interface{}, value interface{}) bool {
+			transaction := value.(*IDealTransactionData)
 
-					// If this transaction is still not closed, re-add it here.
-					status, err := ideal.TransactionStatus(trxid)
-					if err != nil {
-						log.Printf("transaction %s status could not be requested, retrying in %s: %s", trxid, recheckAfter, err)
-						transactions[trxid] = time.Now().Add(recheckAfter)
-					} else if status.Status == idx.Open {
-						log.Printf("transaction %s is still not closed, retrying in %s", trxid, recheckAfter)
-						transactions[trxid] = time.Now().Add(recheckAfter)
-					} else {
-						log.Printf("transaction %s was closed with status %s", trxid, status.Status)
+			if transaction.status != nil {
+				if transaction.status.Status != idx.Open  {
+					if time.Now().After(transaction.recheckAfter) {
+						log.Printf("succeeded transaction %s was closed", transaction.transactionID)
+						transactionState.Delete(key)
 					}
+					return true
+				} else if transaction.started.Add(maxTransactionAge).Before(time.Now()) {
+					log.Printf("transaction %s reached its maximum age without any status change, closing", transaction.transactionID)
+					transactionState.Delete(key)
+					return true
 				}
 			}
-		}
+
+			if transaction.recheckAfter.Before(now) {
+				status, err := ideal.TransactionStatus(transaction.transactionID)
+				transaction.status = status
+				if err != nil {
+					log.Printf("transaction %s status could not be requested, retrying in %s: %s", transaction.transactionID, recheckAfter, err)
+					transaction.recheckAfter = time.Now().Add(recheckAfter)
+				} else if status.Status == idx.Open {
+					log.Printf("transaction %s is still not closed, retrying in %s", transaction.transactionID, recheckAfter)
+					transaction.recheckAfter = time.Now().Add(recheckAfter)
+				} else if status.Status == idx.Success {
+					transaction.recheckAfter = time.Now().Add(saveSucceededTransaction)
+					log.Printf("transaction %s succeeded but user has not started IRMA issuance yet, transaction data stored at max until %s", transaction.transactionID, transaction.recheckAfter)
+				} else {
+					log.Printf("transaction %s was closed with status %s", transaction.transactionID, status.Status)
+					transactionState.Delete(key)
+				}
+			}
+			return true
+		})
 	}
 }

@@ -89,28 +89,23 @@ func cmdServe(addr string) {
 			},
 		}
 
-		// Channels to send transactions over that must be closed in 24 hour, or
-		// removed from this list before this time.
-		trxidAddChan := make(chan string)
-		trxidRemoveChan := make(chan string)
-
 		// Start IRMA server
 		startIrmaServer(addr)
 
 		// iDeal routes
 		http.HandleFunc(config.IDealPathPrefix+"banks", apiIDealIssuers)
 		http.HandleFunc(config.IDealPathPrefix+"start", func(w http.ResponseWriter, r *http.Request) {
-			apiIDealStart(w, r, ideal, trxidAddChan)
+			apiIDealStart(w, r, ideal)
 		})
 		http.HandleFunc(config.IDealPathPrefix+"return", func(w http.ResponseWriter, r *http.Request) {
-			apiIDealReturn(w, r, ideal, trxidRemoveChan)
+			apiIDealReturn(w, r, ideal)
 		})
 
 		// Start updating the banks list in the background.
 		go backgroundUpdateIssuers("iDeal", &iDealIssuersJSON, ideal)
 
 		// Start auto-closing transactions in the background.
-		go idealAutoCloseTransactions(ideal, trxidAddChan, trxidRemoveChan)
+		go idealAutoCloseTransactions(ideal)
 	}
 
 	log.Println("serving from", addr)
