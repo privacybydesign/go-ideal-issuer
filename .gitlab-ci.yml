@@ -1,0 +1,25 @@
+image: privacybydesign/golang_dep:latest
+
+stages:
+  - build
+
+before_script:
+  - set -euxo pipefail
+
+build:
+  stage: build
+  variables:
+    GOOS: linux
+    GOARCH: amd64
+    CGO_ENABLED: 0
+    PACKAGE_NAME: github.com/privacybydesign/go-ideal-issuer
+  artifacts:
+    paths:
+      - artifacts/*
+  script:
+    - mkdir -p "$GOPATH/src/$(dirname "$PACKAGE_NAME")"
+    - ln -s "$CI_PROJECT_DIR" "$GOPATH/src/$PACKAGE_NAME"
+    - cd "$GOPATH/src/$PACKAGE_NAME"
+    - dep ensure -v
+    - mkdir -p artifacts
+    - go build -a -ldflags '-extldflags "-static"' -o "artifacts/go-ideal-issuer" .
