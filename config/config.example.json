@@ -14,7 +14,8 @@
 	"ideal_merchant_id":    "",
 	"ideal_sub_id":         "0",
 	"ideal_return_url":     "",
-	"irma_ideal_issuer_sk": "irma-demo.ideal.xml",
+	"irma_server_url":      "http://localhost:8088",
+	"irma_server_token":    "",
 	"payment_amount":       "0.50",
 	"payment_message":      "iDeal transactie ter authenticatie"
 }
