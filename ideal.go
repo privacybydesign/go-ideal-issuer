@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
-	"github.com/privacybydesign/irmago/server/irmaserver"
+	"github.com/privacybydesign/irmago/server"
 	"log"
 	"net/http"
 	"strings"
@@ -20,20 +20,20 @@ var transactionState sync.Map
 
 // Constants that determine how often transactions are checked
 const (
-	firstCheckAfter = 12 * time.Hour
-	recheckAfter = 24 * time.Hour
+	firstCheckAfter          = 12 * time.Hour
+	recheckAfter             = 24 * time.Hour
 	saveSucceededTransaction = time.Hour
-	maxTransactionAge = 7 * 24 * time.Hour
-	tickInterval = time.Second
+	maxTransactionAge        = 7 * 24 * time.Hour
+	tickInterval             = time.Second
 )
 
 // Struct with information that should be stored in the state
 type IDealTransactionData struct {
 	transactionID string
-	entranceCode string
-	started time.Time
-	recheckAfter time.Time
-	status *idx.IDealTransactionStatus
+	entranceCode  string
+	started       time.Time
+	recheckAfter  time.Time
+	status        *idx.IDealTransactionStatus
 }
 
 func apiIDealIssuers(w http.ResponseWriter, r *http.Request) {
@@ -167,7 +167,7 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 	}
 	request := irma.NewIssuanceRequest(credentials)
 
-	sessionPointer, token, err := irmaserver.StartSession(request, nil)
+	sessionPointer, token, err := postIrmaRequest(request)
 	if err != nil {
 		log.Println("cannot start IRMA session:", err)
 		return
@@ -187,12 +187,22 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 	}
 }
 
+func postIrmaRequest(request irma.SessionRequest) (qr *irma.Qr, token string, err error) {
+	pkg := &server.SessionPackage{}
+
+	transport := irma.NewHTTPTransport(config.IrmaServerURL)
+	transport.SetHeader("Authorization", config.IrmaServerToken)
+	err = transport.Post("session", pkg, request)
+
+	return pkg.SessionPtr, pkg.Token, err
+}
+
 func addTransactionToState(trxid string, ec string) {
 	tdata := IDealTransactionData{
 		transactionID: trxid,
-		entranceCode: ec,
-		started: time.Now(),
-		recheckAfter: time.Now().Add(firstCheckAfter),
+		entranceCode:  ec,
+		started:       time.Now(),
+		recheckAfter:  time.Now().Add(firstCheckAfter),
 	}
 	transactionState.Store(trxid, &tdata)
 }
@@ -201,11 +211,11 @@ func idealAutoCloseTransactions(ideal *idx.IDealClient) {
 	ticker := time.Tick(tickInterval)
 	for range ticker {
 		now := time.Now()
-		transactionState.Range(func (key interface{}, value interface{}) bool {
+		transactionState.Range(func(key interface{}, value interface{}) bool {
 			transaction := value.(*IDealTransactionData)
 
 			if transaction.status != nil {
-				if transaction.status.Status != idx.Open  {
+				if transaction.status.Status != idx.Open {
 					if time.Now().After(transaction.recheckAfter) {
 						log.Printf("succeeded transaction %s was closed", transaction.transactionID)
 						transactionState.Delete(key)

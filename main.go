@@ -29,7 +29,8 @@ type Config struct {
 	IDealMerchantID   string `json:"ideal_merchant_id"`
 	IDealSubID        string `json:"ideal_sub_id"`
 	IDealReturnURL    string `json:"ideal_return_url"`
-	IrmaIdealIssuerSk string `json:"irma_ideal_issuer_sk"`
+	IrmaServerURL     string `json:"irma_server_url"`
+	IrmaServerToken   string `json:"irma_server_token"`
 	PaymentAmount     string `json:"payment_amount"`
 	PaymentMessage    string `json:"payment_message"`
 }

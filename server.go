@@ -2,10 +2,6 @@ package main
 
 import (
 	"crypto/tls"
-	"github.com/privacybydesign/gabi"
-	irma "github.com/privacybydesign/irmago"
-	"github.com/privacybydesign/irmago/server"
-	"github.com/privacybydesign/irmago/server/irmaserver"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -22,31 +18,6 @@ var (
 func sendErrorResponse(w http.ResponseWriter, httpCode int, errorCode string) {
 	w.WriteHeader(httpCode)
 	w.Write([]byte("error:" + errorCode))
-}
-
-func startIrmaServer(addr string) {
-	issuerKey, err := gabi.NewPrivateKeyFromFile(filepath.Join(configDir, config.IrmaIdealIssuerSk))
-	if err != nil {
-		log.Fatal("IRMA IDeal issuer sk could not be found:", err)
-		return
-	}
-	protocol := "http://"
-	if config.EnableTLS {
-		protocol = "https://"
-	}
-	configuration := &server.Configuration{
-		URL: protocol + addr + "/irma",
-		IssuerPrivateKeys: map[irma.IssuerIdentifier]*gabi.PrivateKey{
-			irma.NewCredentialTypeIdentifier(config.IDealCredentialID).IssuerIdentifier(): issuerKey,
-		},
-	}
-
-	err = irmaserver.Initialize(configuration)
-	if err != nil {
-		log.Fatal("IRMA server could not be started:", err)
-		return
-	}
-	http.Handle("/irma/", irmaserver.HandlerFunc())
 }
 
 func cmdServe(addr string) {
@@ -88,9 +59,6 @@ func cmdServe(addr string) {
 				AcquirerCert: iDealAcquirerCert,
 			},
 		}
-
-		// Start IRMA server
-		startIrmaServer(addr)
 
 		// iDeal routes
 		http.HandleFunc(config.IDealPathPrefix+"banks", apiIDealIssuers)
