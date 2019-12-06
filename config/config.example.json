@@ -1,4 +1,5 @@
 {
+	"server_address":       ":4242",
 	"static_dir":           "",
 	"enable_tls":           false,
 	"tls_certificate":      "",
