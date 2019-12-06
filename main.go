@@ -14,6 +14,7 @@ import (
 var configDir string
 
 type Config struct {
+	ServerAddress  string `json:"server_address"`
 	StaticDir      string `json:"static_dir"`
 	EnableTLS      bool   `json:"enable_tls"`
 	TLSCertificate string `json:"tls_certificate"`
@@ -67,17 +68,12 @@ func main() {
 	case "help":
 		flag.Usage()
 	case "server":
-		if flag.NArg() != 2 {
-			fmt.Fprintln(flag.CommandLine.Output(), "Provide a host:port to bind to, for example:\n    ", os.Args[0], "server :8083")
-			flag.Usage()
-			return
-		}
 		err := readConfig()
 		if err != nil {
 			fmt.Fprintln(flag.CommandLine.Output(), "Could not read config file:", err)
 			return
 		}
-		cmdServe(flag.Arg(1))
+		cmdServe()
 	default:
 		fmt.Fprintln(flag.CommandLine.Output(), "Unknown command:", flag.Arg(0))
 		flag.Usage()

@@ -20,7 +20,7 @@ func sendErrorResponse(w http.ResponseWriter, httpCode int, errorCode string) {
 	w.Write([]byte("error:" + errorCode))
 }
 
-func cmdServe(addr string) {
+func cmdServe() {
 	if config.StaticDir != "" {
 		log.Println("serving static files from:", config.StaticDir)
 		static := http.FileServer(http.Dir(config.StaticDir))
@@ -76,14 +76,14 @@ func cmdServe(addr string) {
 		go idealAutoCloseTransactions(ideal)
 	}
 
-	log.Println("serving from", addr)
+	log.Println("serving from", config.ServerAddress)
 
 	if config.EnableTLS {
 		certFilePath := filepath.Join(configDir, config.TLSCertificate)
 		keyFilePath := filepath.Join(configDir, config.TLSPrivateKey)
-		err = http.ListenAndServeTLS(addr, certFilePath, keyFilePath, nil)
+		err = http.ListenAndServeTLS(config.ServerAddress, certFilePath, keyFilePath, nil)
 	} else {
-		err = http.ListenAndServe(addr, nil)
+		err = http.ListenAndServe(config.ServerAddress, nil)
 	}
 	if err != nil {
 		log.Fatal("could not start server: ", err)
