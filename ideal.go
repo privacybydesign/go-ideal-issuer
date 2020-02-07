@@ -52,6 +52,17 @@ func apiIDealIssuers(w http.ResponseWriter, r *http.Request) {
 	w.Write(data)
 }
 
+func apiPaymentAmounts(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	b, err := json.Marshal(config.PaymentAmounts)
+	if err != nil {
+		sendErrorResponse(w, 500, "payment-amounts-cannot-marshal")
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Write(b)
+}
+
 func generateRandomAlphNumString(strLengthAim int) (string, error) {
 	b := make([]byte, (strLengthAim*6)/8)
 	if _, err := rand.Read(b); err != nil {
@@ -63,6 +74,15 @@ func generateRandomAlphNumString(strLengthAim int) (string, error) {
 	return r.Replace(str), nil
 }
 
+func amountAllowed(paymentAmount string) bool {
+	for _, amount := range config.PaymentAmounts {
+		if paymentAmount == amount {
+			return true
+		}
+	}
+	return false
+}
+
 func apiIDealStart(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClient) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
@@ -70,6 +90,14 @@ func apiIDealStart(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClien
 		sendErrorResponse(w, 400, "no-params")
 		return
 	}
+
+	paymentAmount := r.FormValue("amount")
+	if !amountAllowed(paymentAmount) {
+		log.Println("requested payment amount is not allowed", paymentAmount)
+		sendErrorResponse(w, 400, "invalid-amount")
+		return
+	}
+
 	bank := r.FormValue("bank")
 	ec, err := generateRandomAlphNumString(40)
 	pid, err := generateRandomAlphNumString(10)
@@ -78,7 +106,7 @@ func apiIDealStart(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClien
 		sendErrorResponse(w, 500, "no-ec")
 		return
 	}
-	transaction := ideal.NewTransaction(bank, pid, config.PaymentAmount, config.PaymentMessage, ec)
+	transaction := ideal.NewTransaction(bank, pid, paymentAmount, config.PaymentMessage, ec)
 	err = transaction.Start()
 	if err != nil {
 		log.Println("failed to create transaction:", err)
