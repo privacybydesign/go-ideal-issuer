@@ -69,6 +69,9 @@ func cmdServe() {
 			apiIDealReturn(w, r, ideal)
 		})
 
+		// Route to retrieve allowed payment amounts
+		http.HandleFunc(config.IDealPathPrefix+"amounts", apiPaymentAmounts)
+
 		// Start updating the banks list in the background.
 		go backgroundUpdateIssuers("iDeal", &iDealIssuersJSON, ideal)
 

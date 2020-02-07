@@ -32,8 +32,9 @@ type Config struct {
 	IDealReturnURL    string `json:"ideal_return_url"`
 	IrmaServerURL     string `json:"irma_server_url"`
 	IrmaServerToken   string `json:"irma_server_token"`
-	PaymentAmount     string `json:"payment_amount"`
-	PaymentMessage    string `json:"payment_message"`
+
+	PaymentAmounts []string `json:"payment_amount"`
+	PaymentMessage string   `json:"payment_message"`
 }
 
 var (
