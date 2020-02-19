@@ -33,7 +33,7 @@ type Config struct {
 	IrmaServerURL     string `json:"irma_server_url"`
 	IrmaServerToken   string `json:"irma_server_token"`
 
-	PaymentAmounts []string `json:"payment_amount"`
+	PaymentAmounts []string `json:"payment_amounts"`
 	PaymentMessage string   `json:"payment_message"`
 }
 
