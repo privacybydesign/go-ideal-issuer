@@ -15,8 +15,12 @@
 	"ideal_merchant_id":    "",
 	"ideal_sub_id":         "0",
 	"ideal_return_url":     "",
+
 	"irma_server_url":      "http://localhost:8088",
 	"irma_server_token":    "",
-	"payment_amounts":       ["0.50", "1.00", "2.00", "5.00", "10.00", "20.00", "50.00"],
-	"payment_message":      "iDEAL transactie ter authenticatie"
+
+	"payment_amounts": ["0.50", "1.00", "2.00", "5.00", "10.00", "20.00", "50.00"],
+
+	"payment_message_authentication": "iDEAL transactie ter authenticatie",
+	"payment_message_donation":       "Donatie"
 }

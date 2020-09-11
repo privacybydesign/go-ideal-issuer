@@ -63,7 +63,10 @@ func cmdServe() {
 		// iDeal routes
 		http.HandleFunc(config.IDealPathPrefix+"banks", apiIDealIssuers)
 		http.HandleFunc(config.IDealPathPrefix+"start", func(w http.ResponseWriter, r *http.Request) {
-			apiIDealStart(w, r, ideal)
+			apiIDealStart(w, r, ideal, false)
+		})
+		http.HandleFunc(config.IDealPathPrefix+"start-donation", func(w http.ResponseWriter, r *http.Request) {
+			apiIDealStart(w, r, ideal, true)
 		})
 		http.HandleFunc(config.IDealPathPrefix+"return", func(w http.ResponseWriter, r *http.Request) {
 			apiIDealReturn(w, r, ideal)

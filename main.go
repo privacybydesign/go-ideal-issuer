@@ -34,7 +34,9 @@ type Config struct {
 	IrmaServerToken   string `json:"irma_server_token"`
 
 	PaymentAmounts []string `json:"payment_amounts"`
-	PaymentMessage string   `json:"payment_message"`
+
+	PaymentMessageAuthentication string `json:"payment_message_authentication"`
+	PaymentMessageDonation       string `json:"payment_message_donation"`
 }
 
 var (
