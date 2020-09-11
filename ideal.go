@@ -22,7 +22,8 @@ var transactionState sync.Map
 const (
 	firstCheckAfter          = 12 * time.Hour
 	recheckAfter             = 24 * time.Hour
-	saveSucceededTransaction = time.Hour
+	saveSucceededTransaction = 48 * time.Hour
+	saveReturnedTransaction  = time.Hour
 	maxTransactionAge        = 7 * 24 * time.Hour
 	tickInterval             = time.Second
 )
@@ -31,6 +32,7 @@ const (
 type IDealTransactionData struct {
 	transactionID string
 	entranceCode  string
+	donationOnly  bool
 	started       time.Time
 	recheckAfter  time.Time
 	status        *idx.IDealTransactionStatus
@@ -83,7 +85,7 @@ func amountAllowed(paymentAmount string) bool {
 	return false
 }
 
-func apiIDealStart(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClient) {
+func apiIDealStart(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClient, donationOnly bool) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	if err := r.ParseForm(); err != nil {
@@ -106,14 +108,20 @@ func apiIDealStart(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClien
 		sendErrorResponse(w, 500, "no-ec")
 		return
 	}
-	transaction := ideal.NewTransaction(bank, pid, paymentAmount, config.PaymentMessage, ec)
+
+	paymentMessage := config.PaymentMessageAuthentication
+	if donationOnly {
+		paymentMessage = config.PaymentMessageDonation
+	}
+
+	transaction := ideal.NewTransaction(bank, pid, paymentAmount, paymentMessage, ec)
 	err = transaction.Start()
 	if err != nil {
 		log.Println("failed to create transaction:", err)
 		sendErrorResponse(w, 500, "transaction")
 		return
 	}
-	addTransactionToState(transaction.TransactionID(), ec)
+	addTransactionToState(transaction.TransactionID(), ec, donationOnly)
 	log.Printf("transaction %s started", transaction.TransactionID())
 	w.Write([]byte(transaction.IssuerAuthenticationURL()))
 }
@@ -159,7 +167,7 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 			break
 		case idx.Open:
 			transaction.recheckAfter = time.Now().Add(recheckAfter)
-			sendErrorResponse(w, 500, "transaction-open")
+			sendErrorResponse(w, 503, "transaction-open")
 			return
 		case idx.Cancelled:
 			sendErrorResponse(w, 500, "transaction-cancelled")
@@ -173,7 +181,12 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 			return
 		}
 		// Save transaction for some time in case IRMA session fails and user wants to start it again without having to pay again
-		transaction.recheckAfter = time.Now().Add(saveSucceededTransaction)
+		transaction.recheckAfter = time.Now().Add(saveReturnedTransaction)
+	}
+
+	if transaction.donationOnly {
+		w.WriteHeader(http.StatusNoContent)
+		return
 	}
 
 	attributes := map[string]string{
@@ -225,10 +238,11 @@ func postIrmaRequest(request irma.SessionRequest) (qr *irma.Qr, token string, er
 	return pkg.SessionPtr, pkg.Token, err
 }
 
-func addTransactionToState(trxid string, ec string) {
+func addTransactionToState(trxid string, ec string, donationOnly bool) {
 	tdata := IDealTransactionData{
 		transactionID: trxid,
 		entranceCode:  ec,
+		donationOnly:  donationOnly,
 		started:       time.Now(),
 		recheckAfter:  time.Now().Add(firstCheckAfter),
 	}
