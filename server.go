@@ -51,7 +51,7 @@ func cmdServe() {
 				BaseURL:    config.IDealBaseURL,
 				MerchantID: config.IDealMerchantID,
 				SubID:      config.IDealSubID,
-				ReturnURL:  config.IDealReturnURL,
+				ReturnURL:  config.ServerURL + config.IDealPathPrefix + "redirect",
 				Certificate: tls.Certificate{
 					Certificate: [][]byte{cert.Raw},
 					PrivateKey:  sk,
@@ -71,6 +71,7 @@ func cmdServe() {
 		http.HandleFunc(config.IDealPathPrefix+"return", func(w http.ResponseWriter, r *http.Request) {
 			apiIDealReturn(w, r, ideal)
 		})
+		http.HandleFunc(config.IDealPathPrefix+"redirect", apiIdealRedirect)
 		http.HandleFunc(config.IDealPathPrefix+"delete", apiIdealDelete)
 
 		// Route to retrieve allowed payment amounts

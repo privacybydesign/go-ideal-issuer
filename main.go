@@ -15,6 +15,7 @@ var configDir string
 
 type Config struct {
 	ServerAddress  string `json:"server_address"`
+	ServerURL      string `json:"server_url"`
 	StaticDir      string `json:"static_dir"`
 	EnableTLS      bool   `json:"enable_tls"`
 	TLSCertificate string `json:"tls_certificate"`
@@ -29,9 +30,11 @@ type Config struct {
 	IDealBaseURL      string `json:"ideal_base_url"`
 	IDealMerchantID   string `json:"ideal_merchant_id"`
 	IDealSubID        string `json:"ideal_sub_id"`
-	IDealReturnURL    string `json:"ideal_return_url"`
 	IrmaServerURL     string `json:"irma_server_url"`
 	IrmaServerToken   string `json:"irma_server_token"`
+
+	AuthenticationReturnURL string `json:"authentication_return_url"`
+	DonationReturnURL       string `json:"donation_return_url"`
 
 	PaymentAmounts []string `json:"payment_amounts"`
 
