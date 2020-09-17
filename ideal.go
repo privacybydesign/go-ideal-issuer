@@ -8,6 +8,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -250,6 +251,33 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 	if err != nil {
 		log.Println("ideal: cannot encode JSON and send response:", err)
 	}
+}
+
+func apiIdealRedirect(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	trxid := r.URL.Query().Get("trxid")
+	v, ok := transactionState.Load(trxid)
+	if !ok {
+		sendErrorResponse(w, 404, "trxid-not-found")
+		log.Println("trying to request api redirect of an already-closed transaction:", trxid)
+		return
+	}
+	transaction := v.(*IDealTransactionData)
+
+	returnUrl := config.AuthenticationReturnURL
+	if transaction.donationOnly {
+		returnUrl = config.DonationReturnURL
+	}
+	url, err := url.Parse(returnUrl)
+	if err != nil {
+		sendErrorResponse(w, 500, "")
+		log.Printf("invalid return url %s is set for redirect", returnUrl)
+		return
+	}
+	url.RawQuery = r.URL.RawQuery
+	log.Printf("redirect ideal return of transaction %s, donation only is %t", trxid, transaction.donationOnly)
+	http.Redirect(w, r, url.String(), http.StatusFound)
 }
 
 func apiIdealDelete(w http.ResponseWriter, r *http.Request) {

@@ -1,5 +1,6 @@
 {
 	"server_address":       ":4242",
+	"server_url":           "http://localhost:4242",
 	"static_dir":           "",
 	"enable_tls":           false,
 	"tls_certificate":      "",
@@ -14,10 +15,12 @@
 	"ideal_base_url":       "",
 	"ideal_merchant_id":    "",
 	"ideal_sub_id":         "0",
-	"ideal_return_url":     "",
 
-	"irma_server_url":      "http://localhost:8088",
-	"irma_server_token":    "",
+	"authentication_return_url": "http://localhost:4242",
+	"donation_return_url":       "http://localhost:4242",
+
+	"irma_server_url":   "http://localhost:8088",
+	"irma_server_token": "",
 
 	"payment_amounts": ["0.50", "1.00", "2.00", "5.00", "10.00", "20.00", "50.00"],
 
