@@ -126,12 +126,10 @@ func apiIDealStart(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClien
 	w.Write([]byte(transaction.IssuerAuthenticationURL()))
 }
 
-func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClient) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
+func validateTransaction(w http.ResponseWriter, r *http.Request) *IDealTransactionData {
 	if err := r.ParseForm(); err != nil {
 		sendErrorResponse(w, 400, "no-params")
-		return
+		return nil
 	}
 	trxid := r.FormValue("trxid")
 	ec := r.FormValue("ec")
@@ -141,7 +139,7 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 	if !ok {
 		sendErrorResponse(w, 404, "trxid-not-found")
 		log.Println("trying to request api return result of an already-closed transaction:", trxid)
-		return
+		return nil
 	}
 	transaction := v.(*IDealTransactionData)
 
@@ -149,11 +147,22 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 	if transaction.entranceCode != ec {
 		sendErrorResponse(w, 403, "ec-mismatch")
 		log.Printf("trying to retrieve result of transaction %s with ec %s, while actual ec is %s", trxid, ec, transaction.entranceCode)
+		return nil
+	}
+
+	return transaction
+}
+
+func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClient) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	transaction := validateTransaction(w, r)
+	if transaction == nil {
 		return
 	}
 
 	if transaction.status == nil || transaction.status.Status != idx.Success {
-		response, err := ideal.TransactionStatus(trxid)
+		response, err := ideal.TransactionStatus(transaction.transactionID)
 		if err != nil {
 			sendErrorResponse(w, 500, "transaction")
 			log.Println("failed to request transaction status:", err)
@@ -161,7 +170,7 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 		}
 		transaction.status = response
 
-		log.Printf("transaction %s has status %s on return", trxid, response.Status)
+		log.Printf("transaction %s has status %s on return", transaction.transactionID, response.Status)
 		switch response.Status {
 		case idx.Success:
 			break
@@ -226,6 +235,27 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 	if err != nil {
 		log.Println("ideal: cannot encode JSON and send response:", err)
 	}
+}
+
+func apiIdealDelete(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	transaction := validateTransaction(w, r)
+	if transaction == nil {
+		return
+	}
+
+	finished := []idx.TransactionStatus{idx.Success, idx.Cancelled, idx.Expired}
+	for _, s := range finished {
+		if transaction.status.Status == s {
+			log.Printf("transaction %s deleted by user", transaction.transactionID)
+			transactionState.Delete(transaction.transactionID)
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+	}
+	sendErrorResponse(w, 403, "transaction-not-finished")
+	log.Printf("transaction %s is not fully handled by bank, so cannot be deleted yet", transaction.transactionID)
 }
 
 func postIrmaRequest(request irma.SessionRequest) (qr *irma.Qr, token string, err error) {

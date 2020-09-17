@@ -71,6 +71,7 @@ func cmdServe() {
 		http.HandleFunc(config.IDealPathPrefix+"return", func(w http.ResponseWriter, r *http.Request) {
 			apiIDealReturn(w, r, ideal)
 		})
+		http.HandleFunc(config.IDealPathPrefix+"delete", apiIdealDelete)
 
 		// Route to retrieve allowed payment amounts
 		http.HandleFunc(config.IDealPathPrefix+"amounts", apiPaymentAmounts)
