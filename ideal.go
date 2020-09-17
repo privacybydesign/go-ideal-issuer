@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"github.com/privacybydesign/irmago/server"
 	"log"
+	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -26,6 +28,7 @@ const (
 	saveReturnedTransaction  = time.Hour
 	maxTransactionAge        = 7 * 24 * time.Hour
 	tickInterval             = time.Second
+	minimumCheckInterval     = 10 * time.Minute
 )
 
 // Struct with information that should be stored in the state
@@ -35,6 +38,7 @@ type IDealTransactionData struct {
 	donationOnly  bool
 	started       time.Time
 	recheckAfter  time.Time
+	statusChecked time.Time
 	status        *idx.IDealTransactionStatus
 }
 
@@ -161,37 +165,48 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 		return
 	}
 
-	if transaction.status == nil || transaction.status.Status != idx.Success {
+	if !transaction.finished() {
+		retryAt := transaction.statusChecked.Add(minimumCheckInterval)
+		now := time.Now()
+		if retryAt.After(now) {
+			seconds := int(math.Ceil(retryAt.Sub(now).Seconds()))
+			log.Printf("rate limiting transaction %s on return for %d seconds", transaction.transactionID, seconds)
+			w.Header().Set("Retry-After", strconv.Itoa(seconds))
+			sendErrorResponse(w, http.StatusTooManyRequests, "too-many-requests")
+			return
+		}
+
 		response, err := ideal.TransactionStatus(transaction.transactionID)
+		transaction.statusChecked = time.Now()
 		if err != nil {
 			sendErrorResponse(w, 500, "transaction")
 			log.Println("failed to request transaction status:", err)
 			return
 		}
 		transaction.status = response
-
-		log.Printf("transaction %s has status %s on return", transaction.transactionID, response.Status)
-		switch response.Status {
-		case idx.Success:
-			break
-		case idx.Open:
-			transaction.recheckAfter = time.Now().Add(recheckAfter)
-			sendErrorResponse(w, 503, "transaction-open")
-			return
-		case idx.Cancelled:
-			sendErrorResponse(w, 500, "transaction-cancelled")
-			return
-		case idx.Expired:
-			sendErrorResponse(w, 500, "transaction-expired")
-			return
-		default:
-			transaction.recheckAfter = time.Now().Add(recheckAfter)
-			sendErrorResponse(w, 500, "transaction")
-			return
-		}
-		// Save transaction for some time in case IRMA session fails and user wants to start it again without having to pay again
-		transaction.recheckAfter = time.Now().Add(saveReturnedTransaction)
 	}
+
+	log.Printf("transaction %s has status %s on return", transaction.transactionID, transaction.status.Status)
+	switch transaction.status.Status {
+	case idx.Success:
+		break
+	case idx.Open:
+		transaction.recheckAfter = time.Now().Add(recheckAfter)
+		sendErrorResponse(w, 503, "transaction-open")
+		return
+	case idx.Cancelled:
+		sendErrorResponse(w, 500, "transaction-cancelled")
+		return
+	case idx.Expired:
+		sendErrorResponse(w, 500, "transaction-expired")
+		return
+	default:
+		transaction.recheckAfter = time.Now().Add(recheckAfter)
+		sendErrorResponse(w, 500, "transaction")
+		return
+	}
+	// Save transaction for some time in case IRMA session fails and user wants to start it again without having to pay again
+	transaction.recheckAfter = time.Now().Add(saveReturnedTransaction)
 
 	if transaction.donationOnly {
 		w.WriteHeader(http.StatusNoContent)
@@ -245,15 +260,13 @@ func apiIdealDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	finished := []idx.TransactionStatus{idx.Success, idx.Cancelled, idx.Expired}
-	for _, s := range finished {
-		if transaction.status.Status == s {
-			log.Printf("transaction %s deleted by user", transaction.transactionID)
-			transactionState.Delete(transaction.transactionID)
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
+	if transaction.finished() {
+		log.Printf("transaction %s deleted by user", transaction.transactionID)
+		transactionState.Delete(transaction.transactionID)
+		w.WriteHeader(http.StatusNoContent)
+		return
 	}
+
 	sendErrorResponse(w, 403, "transaction-not-finished")
 	log.Printf("transaction %s is not fully handled by bank, so cannot be deleted yet", transaction.transactionID)
 }
@@ -302,6 +315,7 @@ func idealAutoCloseTransactions(ideal *idx.IDealClient) {
 
 			if transaction.recheckAfter.Before(now) {
 				status, err := ideal.TransactionStatus(transaction.transactionID)
+				transaction.statusChecked = time.Now()
 				transaction.status = status
 				if err != nil {
 					log.Printf("transaction %s status could not be requested, retrying in %s: %s", transaction.transactionID, recheckAfter, err)
@@ -320,4 +334,17 @@ func idealAutoCloseTransactions(ideal *idx.IDealClient) {
 			return true
 		})
 	}
+}
+
+func (t *IDealTransactionData) finished() bool {
+	if t.status == nil {
+		return false
+	}
+	finished := []idx.TransactionStatus{idx.Success, idx.Cancelled, idx.Expired}
+	for _, s := range finished {
+		if t.status.Status == s {
+			return true
+		}
+	}
+	return false
 }
