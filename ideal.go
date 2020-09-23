@@ -178,7 +178,7 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 		}
 
 		response, err := ideal.TransactionStatus(transaction.transactionID)
-		transaction.statusChecked = time.Now()
+		transaction.statusChecked = now
 		if err != nil {
 			sendErrorResponse(w, 500, "transaction")
 			log.Println("failed to request transaction status:", err)
@@ -193,7 +193,7 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 		break
 	case idx.Open:
 		transaction.recheckAfter = time.Now().Add(recheckAfter)
-		sendErrorResponse(w, 503, "transaction-open")
+		sendErrorResponse(w, 500, "transaction-open")
 		return
 	case idx.Cancelled:
 		sendErrorResponse(w, 500, "transaction-cancelled")
@@ -343,7 +343,7 @@ func idealAutoCloseTransactions(ideal *idx.IDealClient) {
 
 			if transaction.recheckAfter.Before(now) {
 				status, err := ideal.TransactionStatus(transaction.transactionID)
-				transaction.statusChecked = time.Now()
+				transaction.statusChecked = now
 				transaction.status = status
 				if err != nil {
 					log.Printf("transaction %s status could not be requested, retrying in %s: %s", transaction.transactionID, recheckAfter, err)
