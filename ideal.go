@@ -114,9 +114,9 @@ func apiIDealStart(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClien
 		return
 	}
 
-	paymentMessage := config.PaymentMessageAuthentication
+	paymentMessage := config.AuthenticationPaymentMessage
 	if donationOnly {
-		paymentMessage = config.PaymentMessageDonation
+		paymentMessage = config.DonationPaymentMessage
 	}
 
 	transaction := ideal.NewTransaction(bank, pid, paymentAmount, paymentMessage, ec)

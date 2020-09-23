@@ -38,8 +38,8 @@ type Config struct {
 
 	PaymentAmounts []string `json:"payment_amounts"`
 
-	PaymentMessageAuthentication string `json:"payment_message_authentication"`
-	PaymentMessageDonation       string `json:"payment_message_donation"`
+	AuthenticationPaymentMessage string `json:"authentication_payment_message"`
+	DonationPaymentMessage       string `json:"donation_payment_message"`
 }
 
 var (

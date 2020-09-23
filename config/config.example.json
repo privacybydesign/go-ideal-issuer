@@ -24,6 +24,6 @@
 
 	"payment_amounts": ["0.50", "1.00", "2.00", "5.00", "10.00", "20.00", "50.00"],
 
-	"payment_message_authentication": "iDEAL transactie ter authenticatie",
-	"payment_message_donation":       "Donatie"
+	"authentication_payment_message": "iDEAL transactie ter authenticatie",
+	"donation_payment_message":       "Donatie"
 }
