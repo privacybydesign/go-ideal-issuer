@@ -15,7 +15,6 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/edsrzf/mmap-go v0.0.0-20170320065105-0bce6a688712 // indirect
 	github.com/go-errors/errors v1.0.1 // indirect
-	github.com/go-sql-driver/mysql v1.4.1
 	github.com/hashicorp/go-multierror v1.0.0 // indirect
 	github.com/hashicorp/go-retryablehttp v0.5.0 // indirect
 	github.com/jasonlvhit/gocron v0.0.0-20190826122353-bb373ebbd3f9 // indirect
@@ -23,7 +22,6 @@ require (
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/mattn/go-colorable v0.1.2 // indirect
 	github.com/mattn/go-isatty v0.0.9 // indirect
-	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/nightlyone/lockfile v0.0.0-20180618180623-0ad87eef1443 // indirect
 	github.com/onsi/ginkgo v1.12.0 // indirect
@@ -39,7 +37,6 @@ require (
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2 // indirect
 	go.etcd.io/bbolt v1.3.0 // indirect
 	golang.org/x/crypto v0.0.0-20181127143415-eb0de9b17e85 // indirect
-	google.golang.org/appengine v1.3.0 // indirect
 )
 
 replace github.com/russellhaering/goxmldsig => github.com/aykevl/goxmldsig v0.0.0-20181123163807-3454d5626f5a

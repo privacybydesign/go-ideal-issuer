@@ -5,9 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 // Flags parsed at program startup and never modified afterwards.
