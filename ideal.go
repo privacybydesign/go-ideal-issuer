@@ -44,8 +44,6 @@ type IDealTransactionData struct {
 }
 
 func apiIDealIssuers(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
 	// Atomically get the JSON.
 	banksLock.Lock()
 	data := iDealIssuersJSON
@@ -60,7 +58,6 @@ func apiIDealIssuers(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiPaymentAmounts(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	b, err := json.Marshal(config.PaymentAmounts)
 	if err != nil {
 		sendErrorResponse(w, 500, "payment-amounts-cannot-marshal")
@@ -91,8 +88,6 @@ func amountAllowed(paymentAmount string) bool {
 }
 
 func apiIDealStart(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClient, donationOnly bool) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
 	if err := r.ParseForm(); err != nil {
 		sendErrorResponse(w, 400, "no-params")
 		return
@@ -159,8 +154,6 @@ func validateTransaction(w http.ResponseWriter, r *http.Request) *IDealTransacti
 }
 
 func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClient) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
 	transaction := validateTransaction(w, r)
 	if transaction == nil {
 		return
@@ -233,7 +226,7 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 	}
 	request := irma.NewIssuanceRequest(credentials)
 
-	sessionPointer, token, err := postIrmaRequest(request)
+	sessionPkg, err := postIrmaRequest(request)
 	if err != nil {
 		log.Println("cannot start IRMA session:", err)
 		return
@@ -241,21 +234,13 @@ func apiIDealReturn(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClie
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	encoder := json.NewEncoder(w)
-	err = encoder.Encode(struct {
-		SessionPointer *irma.Qr `json:"sessionPointer"`
-		Token          string   `json:"token"`
-	}{
-		SessionPointer: sessionPointer,
-		Token:          token,
-	})
+	err = encoder.Encode(&sessionPkg)
 	if err != nil {
 		log.Println("ideal: cannot encode JSON and send response:", err)
 	}
 }
 
 func apiIdealRedirect(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
 	trxid := r.URL.Query().Get("trxid")
 	v, ok := transactionState.Load(trxid)
 	if !ok {
@@ -281,8 +266,6 @@ func apiIdealRedirect(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiIdealDelete(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
 	transaction := validateTransaction(w, r)
 	if transaction == nil {
 		return
@@ -299,14 +282,11 @@ func apiIdealDelete(w http.ResponseWriter, r *http.Request) {
 	log.Printf("transaction %s is not fully handled by bank, so cannot be deleted yet", transaction.transactionID)
 }
 
-func postIrmaRequest(request irma.SessionRequest) (qr *irma.Qr, token string, err error) {
-	pkg := &server.SessionPackage{}
-
-	transport := irma.NewHTTPTransport(config.IrmaServerURL)
+func postIrmaRequest(request irma.SessionRequest) (server.SessionPackage, error) {
+	pkg := server.SessionPackage{}
+	transport := irma.NewHTTPTransport(config.IrmaServerURL, false)
 	transport.SetHeader("Authorization", config.IrmaServerToken)
-	err = transport.Post("session", pkg, request)
-
-	return pkg.SessionPtr, pkg.Token, err
+	return pkg, transport.Post("session", &pkg, request)
 }
 
 func addTransactionToState(trxid string, ec string, donationOnly bool) {
