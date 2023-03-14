@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
-	"github.com/privacybydesign/irmago/server"
 	"log"
 	"math"
 	"net/http"
@@ -14,8 +13,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/privacybydesign/irmago/server"
+
 	"github.com/aykevl/go-idx"
-	"github.com/privacybydesign/irmago"
+	irma "github.com/privacybydesign/irmago"
 )
 
 // Global variable to take account of the state with open and pending transactions
@@ -102,10 +103,16 @@ func apiIDealStart(w http.ResponseWriter, r *http.Request, ideal *idx.IDealClien
 
 	bank := r.FormValue("bank")
 	ec, err := generateRandomAlphNumString(40)
+	if err != nil {
+		log.Println("failed to generate fresh entranceCode:", err)
+		sendErrorResponse(w, 500, "no-ec")
+		return
+	}
+
 	pid, err := generateRandomAlphNumString(10)
 	if err != nil {
-		log.Println("failed to generate fresh ec:", err)
-		sendErrorResponse(w, 500, "no-ec")
+		log.Println("failed to generate fresh purchaseID:", err)
+		sendErrorResponse(w, 500, "no-pid")
 		return
 	}
 
